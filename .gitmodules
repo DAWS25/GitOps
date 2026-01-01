@@ -1,0 +1,3 @@
+[submodule "daws"]
+	path = daws
+	url = git@github.com:DAWS25/daws.git
