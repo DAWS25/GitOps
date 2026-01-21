@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -ex
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-REPO_DIR="$( dirname "$( dirname "$DIR")")"
+REPO_DIR="$( dirname "$DIR")"
 pushd "$REPO_DIR"
 echo "script [$0] started at [$(pwd)]"
 #!

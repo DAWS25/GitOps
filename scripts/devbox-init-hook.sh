@@ -28,9 +28,6 @@ else
   git -C "$SECRETS_DIR" pull origin main
 fi
 
-echo "✅ Secrets are set up, this is your AWS identity:"
-aws sts get-caller-identity
-
 #!
 popd
 echo "script [$0] completed"
