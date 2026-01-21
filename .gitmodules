@@ -4,3 +4,9 @@
 [submodule "modules/Presence"]
 	path = modules/Presence
 	url = git@github.com:DAWS25/Presence.git
+[submodule "modules/modules/Janitor"]
+	path = modules/modules/Janitor
+	url = git@github.com:DAWS25/Janitor.git
+[submodule "modules/Janitor"]
+	path = modules/Janitor
+	url = git@github.com:DAWS25/Janitor.git
