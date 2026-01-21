@@ -10,6 +10,8 @@
       "userGid": "1000"
     },
 
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+
     "ghcr.io/devcontainers-extra/features/direnv:1": {},
 
     "ghcr.io/devcontainers/features/aws-cli:1": {},
@@ -32,6 +34,10 @@
   "forwardPorts": [8080, 8443, 3000],
 
   "postCreateCommand": "./.devcontainer/post-create.sh",
+
+  "remoteEnv": {
+    "PATH": "${containerWorkspaceFolder}/.devbox/nix/profile/default/bin:${containerEnv:PATH}"
+  },
 
   "customizations": {
     "codespaces": {
