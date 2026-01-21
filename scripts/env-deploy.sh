@@ -11,6 +11,7 @@ echo "script [$0] started at [$(pwd)]"
 export ENV_ID="${ENV_PROJECT,,}-${ENV_GRADE,,}"
 export ENV_SECRETS_DIR="$ENV_SECRETS_REPO/env/$ENV_ID"
 export MODULE_DIR="$REPO_DIR/modules/$ENV_PROJECT"
+export ENV_SECRETS_REPO="$REPO_DIR/../GitOps-Secrets"
 
 # If $ENV_SECRETS_DIR/.envrc exists, load it
 if [ -f "$ENV_SECRETS_DIR/.envrc" ]; then

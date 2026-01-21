@@ -7,11 +7,10 @@ echo "script [$0] started at [$(pwd)]"
 #/
 
 # Set environment ID and secrets directory
-export ENV_PROJECT="Janitor"
+export ENV_PROJECT="Compass"
 export ENV_GRADE="beta"
-export ENV_SECRETS_REPO="$REPO_DIR/../GitOps-Secrets"
 
-source ${REPO_DIR}/scripts/env-deploy.sh
+source "${REPO_DIR}/scripts/env-deploy.sh"
 
 #/
 popd
