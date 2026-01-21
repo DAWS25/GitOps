@@ -9,15 +9,27 @@ echo "script [$0] started"
 aws --version
 cdk --version
 
+# SSH key setup
+SSH_KEY_PATH="$HOME/.ssh/id_rsa"
+if [ -f "$SSH_KEY_PATH" ]; then
+  echo "Using existing SSH key at $SSH_KEY_PATH"
+  chmod 600 "$SSH_KEY_PATH"
+fi
+
 # Check secrets
 SECRETS_DIR="$DIR/../../GitOps-Secrets"
 SECRETS_REPO="git@github.com:DAWS25/GitOps-Secrets.git"
 
 if [ ! -d "$SECRETS_DIR" ]; then
   echo "Secrets directory not found: $SECRETS_DIR"
-  chmod 600 /home/vscode/.ssh/id_rsa
   GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no" git clone "$SECRETS_REPO" "$SECRETS_DIR"
+else
+  echo "Secrets directory found: $SECRETS_DIR"
+  git -C "$SECRETS_DIR" pull origin main
 fi
+
+echo "✅ Secrets are set up, this is your AWS identity:"
+aws sts get-caller-identity
 
 #!
 popd
