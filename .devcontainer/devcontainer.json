@@ -35,6 +35,15 @@
 
   "customizations": {
     "codespaces": {
+
+      "repositories": {
+        "DAWS25/GitOps-Secrets": {
+          "permissions": {
+            "contents": "read"
+          }
+        }
+      },
+
       "vscode": {
         "settings": {},
         "extensions": [

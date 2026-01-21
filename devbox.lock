@@ -1,0 +1,121 @@
+{
+  "lockfile_version": "1",
+  "packages": {
+    "aws-cdk-cli@latest": {
+      "last_modified": "2025-12-31T03:27:36Z",
+      "resolved": "github:NixOS/nixpkgs/f665af0cdb70ed27e1bd8f9fdfecaf451260fc55#aws-cdk-cli",
+      "source": "devbox-search",
+      "version": "2.1100.1",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/nsvzxasam5i0p34mg5i55d9rabpd83i0-aws-cdk-cli-2.1100.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/nsvzxasam5i0p34mg5i55d9rabpd83i0-aws-cdk-cli-2.1100.1"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/fvap3fjqrfy5x80k98vagdialk1pg26p-aws-cdk-cli-2.1100.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/fvap3fjqrfy5x80k98vagdialk1pg26p-aws-cdk-cli-2.1100.1"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/21f52zkf0vdckabnwarvapp7jkwmsxqi-aws-cdk-cli-2.1100.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/21f52zkf0vdckabnwarvapp7jkwmsxqi-aws-cdk-cli-2.1100.1"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/qh85h4l8jfxfbrik9cbqcwaq3797l8ml-aws-cdk-cli-2.1100.1",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/qh85h4l8jfxfbrik9cbqcwaq3797l8ml-aws-cdk-cli-2.1100.1"
+        }
+      }
+    },
+    "awscli2@latest": {
+      "last_modified": "2026-01-09T13:41:53Z",
+      "resolved": "github:NixOS/nixpkgs/5f02c91314c8ba4afe83b256b023756412218535#awscli2",
+      "source": "devbox-search",
+      "version": "2.32.15",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/yfch5v9958g1wxhfckj3sfz6cpv8fgfq-awscli2-2.32.15",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/4n2njp3bws3pb9jmq8f4dzigx9qkgmjr-awscli2-2.32.15-dist"
+            }
+          ],
+          "store_path": "/nix/store/yfch5v9958g1wxhfckj3sfz6cpv8fgfq-awscli2-2.32.15"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/a5lqz37jsqsfqfxv1j2vcq472y73x3k4-awscli2-2.32.15",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/3llxnlc2hlra4xr14k6r14qljnislac5-awscli2-2.32.15-dist"
+            }
+          ],
+          "store_path": "/nix/store/a5lqz37jsqsfqfxv1j2vcq472y73x3k4-awscli2-2.32.15"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/ayx3lxh4pcmi9yxz7f80b5alnyzjz762-awscli2-2.32.15",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/xrnm59vxx1rbrmggsk8z5599jvs68h60-awscli2-2.32.15-dist"
+            }
+          ],
+          "store_path": "/nix/store/ayx3lxh4pcmi9yxz7f80b5alnyzjz762-awscli2-2.32.15"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/m7jaymx0zvf9pvlaic9sggf8mwjvjan7-awscli2-2.32.15",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/6wa1pgspzyhwznck5qz73xl7wpyxv57g-awscli2-2.32.15-dist"
+            }
+          ],
+          "store_path": "/nix/store/m7jaymx0zvf9pvlaic9sggf8mwjvjan7-awscli2-2.32.15"
+        }
+      }
+    },
+    "github:NixOS/nixpkgs/nixpkgs-unstable": {
+      "last_modified": "2026-01-20T02:11:35Z",
+      "resolved": "github:NixOS/nixpkgs/ed142ab1b3a092c4d149245d0c4126a5d7ea00b0?lastModified=1768875095&narHash=sha256-dYP3DjiL7oIiiq3H65tGIXXIT1Waiadmv93JS0sS%2B8A%3D"
+    }
+  }
+}
