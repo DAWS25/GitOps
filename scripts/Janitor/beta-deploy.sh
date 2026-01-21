@@ -7,7 +7,7 @@ echo "script [$0] started at [$(pwd)]"
 #!
 
 # Set environment ID and secrets directory
-export ENV_PROJECT="Presence"
+export ENV_PROJECT="Janitor"
 export ENV_GRADE="beta"
 export ENV_SECRETS_REPO="$REPO_DIR/../GitOps-Secrets"
 
