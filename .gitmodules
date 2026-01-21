@@ -10,3 +10,6 @@
 [submodule "modules/Janitor"]
 	path = modules/Janitor
 	url = git@github.com:DAWS25/Janitor.git
+[submodule "modules/Compass"]
+	path = modules/Compass
+	url = git@github.com:DAWS25/Compass.git
