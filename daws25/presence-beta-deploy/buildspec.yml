@@ -1,0 +1,8 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      # 1. adicionar o clone no script de deploy
+      # 2. adicionar o repo como sub modulo do git
+      - ./modules/Presence/scripts/beta-deploy.sh
