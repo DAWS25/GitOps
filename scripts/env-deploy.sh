@@ -21,7 +21,7 @@ else
 fi
 
 # Initialize git submodule modules/Presence
-git submodule update --init "$MODULE_DIR"
+git submodule update --remote "$MODULE_DIR"
 
 # Run deployment script
 source "$MODULE_DIR/scripts/env-deploy.sh"
