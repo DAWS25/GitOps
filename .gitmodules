@@ -13,3 +13,6 @@
 [submodule "modules/Compass"]
 	path = modules/Compass
 	url = git@github.com:DAWS25/Compass.git
+[submodule "modules/OTO"]
+	path = modules/OTO
+	url = git@github.com:DAWS25/OTO.git
