@@ -5,28 +5,35 @@ pushd "$DIR/.."
 echo "script [$0] started"
 #!
 
-# Check if flutter is installed, install if not
 if ! command -v flutter &> /dev/null; then
-  # Install dependencies
-  sudo apt-get update
-  sudo apt-get install -y git curl clang cmake ninja-build pkg-config libgtk-3-dev
-
-  # Clone Flutter SDK
-  git clone https://github.com/flutter/flutter.git -b stable ~/flutter
-
-  # Add Flutter to PATH
-  export PATH="$PATH:~/flutter/bin"
-  echo '' >> ~/.bashrc
-  echo 'c' >> ~/.bashrc
-  echo '' >> ~/.bashrc
-  source ~/.bashrc
-
-  # Verify installation
-  flutter doctor
-
-  # Accept Flutter licenses
-  flutter doctor --android-licenses
+    echo "Flutter not found, installing..."
+    sudo apt-get update
+    sudo apt-get install -y curl git unzip xz-utils zip
+    curl -O https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_latest.tar.xz
+    tar xf flutter_linux_latest.tar.xz
+    export PATH="$PATH:$HOME/flutter/bin"
+    rm flutter_linux_latest.tar.xz
 fi
+
+
+# Check Dart version (require 3.12+)
+DART_VERSION=$(flutter --version | grep -oE 'Dart [0-9]+\.[0-9]+\.[0-9]+' | awk '{print $2}')
+REQUIRED_DART_MAJOR=3
+REQUIRED_DART_MINOR=12
+if [ -n "$DART_VERSION" ]; then
+  DART_MAJOR=$(echo $DART_VERSION | cut -d. -f1)
+  DART_MINOR=$(echo $DART_VERSION | cut -d. -f2)
+  if [ "$DART_MAJOR" -lt "$REQUIRED_DART_MAJOR" ] || { [ "$DART_MAJOR" -eq "$REQUIRED_DART_MAJOR" ] && [ "$DART_MINOR" -lt "$REQUIRED_DART_MINOR" ]; }; then
+    echo "Dart version $DART_VERSION found. Dart 3.12+ is required. Please update Flutter/Dart SDK."
+    exit 1
+  fi
+else
+  echo "Could not determine Dart version."
+  exit 1
+fi
+
+# Accept Flutter licenses
+yes | flutter doctor --android-licenses
 
 # Check dependencies versions
 aws --version
@@ -52,7 +59,6 @@ else
   git -C "$SECRETS_DIR" pull origin main
 fi
 
-git submodule update --init --recursive modules/
 
 #!
 popd

@@ -20,8 +20,18 @@ else
   echo "[WARNING] $ENV_SECRETS_DIR/.envrc not found!"
 fi
 
-# Initialize git submodule modules/Presence
-git submodule update --remote "$MODULE_DIR"
+# check if the submodule in MOUDLE_DIR exists. if it is not initialized, initialize it. update to latest commit on origin main branch.
+export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+if [ ! -d "$MODULE_DIR" ] || [ ! -f "$MODULE_DIR/.git/config" ]; then
+  echo "Submodule $MODULE_DIR not found or not initialized. Initializing submodule..."
+  git submodule update --init --recursive "$MODULE_DIR"
+else
+  echo "Submodule $MODULE_DIR found. Updating to latest commit on origin main branch..."
+  pushd "$MODULE_DIR"
+  git fetch origin main
+  git checkout origin/main
+  popd
+fi
 
 # Run deployment script
 source "$MODULE_DIR/scripts/env-deploy.sh"
