@@ -22,10 +22,6 @@
       "jdkDistro": "graalce"
     },
 
-    "ghcr.io/devcontainers/features/node:1": {
-      "version": "lts"
-    },
-
     "ghcr.io/dlouwers/devcontainer-features/devbox:1": {}
   },
 
