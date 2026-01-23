@@ -4,15 +4,25 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 pushd "$DIR/.."
 echo "script [$0] started"
 #!
+
+# SSH key check
+SSH_KEY_PATH="$HOME/.ssh/id_rsa"
+if [ -f "$SSH_KEY_PATH" ]; then
+  echo "Using existing SSH key at $SSH_KEY_PATH"
+  chmod 600 "$SSH_KEY_PATH"
+fi
+
 # for each git submodule module under modules/*, initialize git submodule if needed and update (pull latest changes) from origin main branch
-for module_dir in modules/*/; do
-    echo "Processing submodule: $module_dir"
-    pushd "$module_dir"
-    git fetch origin
-    git checkout main
-    git pull origin main
-    if [ -f ".gitmodules" ]; then
-        git submodule update --init --recursive
+export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+for MODULE_DIR in modules/*/; do
+    pushd "$MODULE_DIR"
+    if [ ! -d "$MODULE_DIR" ] || [ ! -f "$MODULE_DIR/.git/config" ]; then
+        echo "Submodule $MODULE_DIR not found or not initialized. Initializing submodule..."
+        git submodule update --init --recursive .
+    else
+        echo "Submodule $MODULE_DIR found. Updating to latest commit on origin main branch..."
+        git fetch origin main
+        git checkout origin/main
     fi
     popd
 done

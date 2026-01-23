@@ -5,7 +5,7 @@ pushd "$DIR/.."
 echo "script [$0] started"
 #!
 
-# Flutter check and 
+# Flutter setup
 # https://docs.flutter.dev/install/manual
 FLUTTER_PACKAGE_URL="https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.38.7-stable.tar.xz"
 if ! command -v flutter &> /dev/null; then
@@ -16,25 +16,18 @@ if ! command -v flutter &> /dev/null; then
     tar xf /tmp/flutter_linux_latest.tar.xz -C "$HOME"
     mkdir -p "$HOME/.local/bin"
     ln -s "$HOME/flutter/bin/flutter" "$HOME/.local/bin/flutter"
+    ln -s "$HOME/flutter/bin/dart" "$HOME/.local/bin/dart"
     rm /tmp/flutter_linux_latest.tar.xz
     yes | flutter doctor --android-licenses
   fi
 
 
-# Check Dart version (require 3.12+)
-DART_VERSION=$(flutter --version | grep -oE 'Dart [0-9]+\.[0-9]+\.[0-9]+' | awk '{print $2}')
-REQUIRED_DART_MAJOR=3
-REQUIRED_DART_MINOR=12
-if [ -n "$DART_VERSION" ]; then
-  DART_MAJOR=$(echo $DART_VERSION | cut -d. -f1)
-  DART_MINOR=$(echo $DART_VERSION | cut -d. -f2)
-  if [ "$DART_MAJOR" -lt "$REQUIRED_DART_MAJOR" ] || { [ "$DART_MAJOR" -eq "$REQUIRED_DART_MAJOR" ] && [ "$DART_MINOR" -lt "$REQUIRED_DART_MINOR" ]; }; then
-    echo "Dart version $DART_VERSION found. Dart 3.12+ is required. Please update Flutter/Dart SDK."
-    exit 1
-  fi
-else
-  echo "Could not determine Dart version."
-  exit 1
+# Terraform setup
+if ! command -v terraform &> /dev/null; then
+    echo "Terraform not found, installing..."
+    wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release || lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+    sudo apt update && sudo apt install terraform -y
 fi
 
 
@@ -43,6 +36,7 @@ aws --version
 cdk --version
 flutter --version
 dart --version
+terraform version
 
 # SSH key setup
 SSH_KEY_PATH="$HOME/.ssh/id_rsa"
