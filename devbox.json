@@ -2,13 +2,10 @@
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.16.0/.schema/devbox.schema.json",
   "packages": [
     "awscli2@latest",
-    "aws-cdk-cli@latest",
-    "terraform@latest"
+    "aws-cdk-cli@latest"
   ],
   "shell": {
-    "init_hook": [
-      "./scripts/devbox-init-hook.sh"
-    ],
+    "init_hook": "./scripts/devbox-init-hook.sh",
     "scripts": {
       "test": [
         "echo \"Error: no test specified\" && exit 1"

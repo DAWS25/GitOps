@@ -5,15 +5,20 @@ pushd "$DIR/.."
 echo "script [$0] started"
 #!
 
+# Flutter check and 
+# https://docs.flutter.dev/install/manual
+FLUTTER_PACKAGE_URL="https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.38.7-stable.tar.xz"
 if ! command -v flutter &> /dev/null; then
     echo "Flutter not found, installing..."
-    sudo apt-get update
-    sudo apt-get install -y curl git unzip xz-utils zip
-    curl -O https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_latest.tar.xz
-    tar xf flutter_linux_latest.tar.xz
-    export PATH="$PATH:$HOME/flutter/bin"
-    rm flutter_linux_latest.tar.xz
-fi
+    sudo apt-get update -y && sudo apt-get upgrade -y
+    sudo apt-get install -y curl git unzip xz-utils zip libglu1-mesa
+    curl -L -o /tmp/flutter_linux_latest.tar.xz "$FLUTTER_PACKAGE_URL"
+    tar xf /tmp/flutter_linux_latest.tar.xz -C "$HOME"
+    mkdir -p "$HOME/.local/bin"
+    ln -s "$HOME/flutter/bin/flutter" "$HOME/.local/bin/flutter"
+    rm /tmp/flutter_linux_latest.tar.xz
+    yes | flutter doctor --android-licenses
+  fi
 
 
 # Check Dart version (require 3.12+)
@@ -32,13 +37,12 @@ else
   exit 1
 fi
 
-# Accept Flutter licenses
-yes | flutter doctor --android-licenses
 
 # Check dependencies versions
 aws --version
 cdk --version
 flutter --version
+dart --version
 
 # SSH key setup
 SSH_KEY_PATH="$HOME/.ssh/id_rsa"
