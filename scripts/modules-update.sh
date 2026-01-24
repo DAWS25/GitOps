@@ -16,13 +16,13 @@ fi
 export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 for MODULE_DIR in modules/*/; do
     pushd "$MODULE_DIR"
-    if [ ! -d "$MODULE_DIR" ] || [ ! -f "$MODULE_DIR/.git/config" ]; then
-        echo "Submodule $MODULE_DIR not found or not initialized. Initializing submodule..."
-        git submodule update --init --recursive .
-    else
+    if [ -f "./README.md" ]; then
         echo "Submodule $MODULE_DIR found. Updating to latest commit on origin main branch..."
         git fetch origin main
         git checkout origin/main
+    else
+        echo "Submodule $MODULE_DIR not found or not initialized. Initializing submodule..."
+        git submodule update --init --recursive .
     fi
     popd
 done
