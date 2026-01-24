@@ -1,0 +1,8 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - echo "Starting presence beta deployment..."
+      - aws sts get-caller-identity
+      - echo "Done Presence Beta application..."
