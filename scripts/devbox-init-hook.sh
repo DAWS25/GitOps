@@ -40,6 +40,20 @@ then
     sudo /tmp/sam-installation/install
     rm -rf /tmp/sam-installation /tmp/aws-sam-cli-linux-x86_64.zip
 fi
+
+# Node setup
+NVM_URL="https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh"
+if ! command -v node &> /dev/null; then
+   # Setup nodejs using nvm
+  echo "Node.js not found, installing..."
+  curl -o- $NVM_URL | bash
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+  nvm install --lts
+  ln -s "$(which node)" "$HOME/.local/bin/node"
+fi
+
+
 # Check dependencies versions
 aws --version
 cdk --version
