@@ -30,13 +30,27 @@ if ! command -v terraform &> /dev/null; then
     sudo apt update && sudo apt install terraform -y
 fi
 
-
+# SAM Setup
+SAM_URL="https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip"
+if ! command -v sam &> /dev/null
+then
+    echo "AWS SAM CLI not found, installing..."
+    wget $SAM_URL -O "/tmp/aws-sam-cli-linux-x86_64.zip"
+    unzip /tmp/aws-sam-cli-linux-x86_64.zip -d /tmp/sam-installation
+    sudo /tmp/sam-installation/install
+    rm -rf /tmp/sam-installation /tmp/aws-sam-cli-linux-x86_64.zip
+fi
 # Check dependencies versions
 aws --version
 cdk --version
+sam --version
+
+terraform version
+
 flutter --version
 dart --version
-terraform version
+
+java --version
 
 # SSH key setup
 SSH_KEY_PATH="$HOME/.ssh/id_rsa"
