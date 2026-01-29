@@ -9,15 +9,17 @@ echo "script [$0] started at [$(pwd)]"
 
 # Reusable deployment script
 export ENV_ID="${ENV_PROJECT,,}-${ENV_GRADE,,}"
+export ENV_SECRETS_REPO="$REPO_DIR/../GitOps-Secrets"
 export ENV_SECRETS_DIR="$ENV_SECRETS_REPO/env/$ENV_ID"
 export MODULE_DIR="$REPO_DIR/modules/$ENV_PROJECT"
-export ENV_SECRETS_REPO="$REPO_DIR/../GitOps-Secrets"
 
 # If $ENV_SECRETS_DIR/.envrc exists, load it
+echo "Loading environment variables from $ENV_SECRETS_DIR/.envrc"
 if [ -f "$ENV_SECRETS_DIR/.envrc" ]; then
   source "$ENV_SECRETS_DIR/.envrc"
 else
   echo "[WARNING] $ENV_SECRETS_DIR/.envrc not found!"
+  sleep 5
 fi
 
 # check if the submodule in MOUDLE_DIR exists. if it is not initialized, initialize it. update to latest commit on origin main branch.
@@ -34,6 +36,7 @@ pushd "$MODULE_DIR"
 popd
 
 # Run deployment script
+export TF_VAR_env_id="$ENV_ID"
 source "$MODULE_DIR/scripts/env-deploy.sh"
 
 #!

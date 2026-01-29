@@ -5,13 +5,26 @@ pushd "$DIR/.."
 echo "script [$0] started"
 #!
 
+# Detect if the system is Ubuntu/Debian based or Red Hat / AMZN based, using the package manager available.
+# Install common dependencies
+if command -v apt-get &> /dev/null; then
+    echo "Detected apt-get package manager. Installing common dependencies..."
+    sudo apt-get update -y
+    sudo apt-get upgrade -y
+    wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release || lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+    sudo apt-get install -y git curl unzip wget xz-utils zip libglu1-mesa terraform
+elif command -v yum &> /dev/null; then
+    echo "Detected yum package manager. Installing common dependencies..."
+    sudo yum update -y
+    sudo yum install -y git curl unzip wget zip mesa-libGLU terraform
+else
+
 # Flutter setup
 # https://docs.flutter.dev/install/manual
 FLUTTER_PACKAGE_URL="https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.38.7-stable.tar.xz"
 if ! command -v flutter &> /dev/null; then
     echo "Flutter not found, installing..."
-    sudo apt-get update -y && sudo apt-get upgrade -y
-    sudo apt-get install -y curl git unzip xz-utils zip libglu1-mesa
     curl -L -o /tmp/flutter_linux_latest.tar.xz "$FLUTTER_PACKAGE_URL"
     tar xf /tmp/flutter_linux_latest.tar.xz -C "$HOME"
     mkdir -p "$HOME/.local/bin"
@@ -22,13 +35,6 @@ if ! command -v flutter &> /dev/null; then
   fi
 
 
-# Terraform setup
-if ! command -v terraform &> /dev/null; then
-    echo "Terraform not found, installing..."
-    wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release || lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-    sudo apt update && sudo apt install terraform -y
-fi
 
 # SAM Setup
 SAM_URL="https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip"
