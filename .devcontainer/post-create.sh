@@ -1,7 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -ex
 
 # Nix fix
-sudo chown -r $USER /nix
+sudo chown -R $USER /nix
 
 # Package manager detection (apt or yum only)
 if command -v apt-get &> /dev/null; then
@@ -37,15 +38,29 @@ if ! command -v docker &> /dev/null; then
         sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
         ${PKG_INSTALL_CMD} docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
     fi
-    sudo systemctl enable --now docker
+    # Enable and start Docker (handle both systemd and service-based systems)
+    if command -v systemctl &> /dev/null; then
+        sudo systemctl enable --now docker
+    else
+        sudo service docker start || echo "Docker service start attempted"
+    fi
 fi
 
-# Post-install: docker group and user access
+# Post-install: docker group and user access (per Docker official docs)
 if ! getent group docker > /dev/null; then
     echo "Creating docker group..."
     sudo groupadd docker
 fi
 sudo usermod -aG docker ${USER}
+
+# Ensure Docker daemon is running in non-systemd environments and fix socket permissions
+if ! command -v systemctl &> /dev/null; then
+    sudo service docker start || true
+    sleep 2
+    if [ -S /var/run/docker.sock ]; then
+        sudo chmod 666 /var/run/docker.sock
+    fi
+fi
 
 # DirEnv setup
 if ! command -v direnv &> /dev/null
@@ -53,6 +68,7 @@ then
     echo "direnv could not be found, installing..."
     ${PKG_INSTALL_CMD} direnv
 fi
+touch .envrc
 direnv allow .
 
 # Info
