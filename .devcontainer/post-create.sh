@@ -31,6 +31,31 @@ then
 fi
 sudo chown -R $USER /nix
 
+# Docker setup
+if ! command -v docker &> /dev/null; then
+    echo "docker could not be found, installing..."
+    if [ "${PKG_MANAGER}" = "apt-get" ]; then
+        ${PKG_INSTALL_CMD} ca-certificates curl gnupg lsb-release
+        sudo install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+        sudo chmod a+r /etc/apt/keyrings/docker.gpg
+        . /etc/os-release
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu ${VERSION_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+        ${PKG_INSTALL_CMD} docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    elif [ "${PKG_MANAGER}" = "yum" ]; then
+        ${PKG_INSTALL_CMD} yum-utils
+        sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+        ${PKG_INSTALL_CMD} docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    fi
+    sudo systemctl enable --now docker
+fi
+
+# Post-install: docker group and user access
+if ! getent group docker > /dev/null; then
+    sudo groupadd docker
+fi
+sudo usermod -aG docker ${USER}
+
 # DirEnv setup
 if ! command -v direnv &> /dev/null
 then
@@ -39,7 +64,6 @@ then
 fi
 touch .envrc
 direnv allow .
-# 
 
 # Python and NodeJS setup
 if [ "$PKG_MANAGER" = "apt-get" ]; then
