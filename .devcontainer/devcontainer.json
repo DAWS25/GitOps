@@ -1,27 +1,16 @@
 {
   "name": "GitOps Dev Container",
 
-  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
-
+  "image": "debian:bookworm",
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {
       "username": "vscode",
       "userUid": "1000",
       "userGid": "1000"
     },
-
-    "ghcr.io/devcontainers/features/docker-in-docker:2.14.0": {},
-
-    "ghcr.io/devcontainers/features/github-cli:1": {},
-
-    "ghcr.io/devcontainers/features/aws-cli:1": {},
-
-    "ghcr.io/devcontainers-extra/features/quarkus-sdkman:2": {
-      "jdkDistro": "graalce"
-    },
-
-    "ghcr.io/dlouwers/devcontainer-features/devbox:1": {}
+    "ghcr.io/devcontainers/features/docker-in-docker:2.14.0": {}
   },
+  "postCreateCommand": "./.devcontainer/post-create.sh",
 
   "remoteUser": "vscode",
 
