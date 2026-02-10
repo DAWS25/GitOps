@@ -33,29 +33,13 @@ Parameters:
     Description: CodeBuild Docker image
 
 Resources:
-  CodeBuildServiceRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub "${ProjectName}-codebuild-role"
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: codebuild.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonS3FullAccess
-        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
-        - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
-        - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
 
   CodeBuildDefaultPolicy:
     Type: AWS::IAM::Policy
     Properties:
       PolicyName: !Sub "${ProjectName}-default-policy"
       Roles:
-        - !Ref CodeBuildServiceRole
+        - Fn::ImportValue: !Sub "${ProjectName}-role-name"
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -94,7 +78,8 @@ Resources:
     Properties:
       Name: !Ref ProjectName
       Description: Presence beta deployment build project
-      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      ServiceRole:
+        Fn::ImportValue: !Sub "${ProjectName}-role-arn"
       Artifacts:
         Type: NO_ARTIFACTS
       Environment:
@@ -128,7 +113,3 @@ Outputs:
   CodeBuildProjectArn:
     Description: CodeBuild project ARN
     Value: !GetAtt CodeBuildProject.Arn
-
-  CodeBuildServiceRoleArn:
-    Description: CodeBuild service role ARN
-    Value: !GetAtt CodeBuildServiceRole.Arn

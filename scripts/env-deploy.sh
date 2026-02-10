@@ -23,16 +23,45 @@ else
 fi
 
 # check if the submodule in MOUDLE_DIR exists. if it is not initialized, initialize it. update to latest commit on origin main branch.
-export GIT_SSH_COMMAND="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+echo "[DEBUG] Checking submodule: $MODULE_DIR"
+echo "[DEBUG] Current directory: $(pwd)"
+
+# Configure git to use HTTPS with token if available, otherwise use HTTPS without token
+if [ -n "$GITHUB_TOKEN" ]; then
+    echo "[DEBUG] Configuring git to use GITHUB_TOKEN for authentication (token length: ${#GITHUB_TOKEN} chars)..."
+    git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "git@github.com:"
+    git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+    echo "[DEBUG] Git URL rewrite configuration applied"
+else
+    echo "[WARNING] No GITHUB_TOKEN found, using HTTPS without authentication..."
+    echo "[WARNING] This may fail for private repositories!"
+    git config --global url."https://github.com/".insteadOf "git@github.com:"
+fi
+
+echo "[DEBUG] Current git URL rewrites:"
+git config --global --list | grep "url\." || echo "[DEBUG] No URL rewrites configured"
+
+echo "[DEBUG] Checking if module directory exists: $MODULE_DIR"
+ls -la "$MODULE_DIR" 2>/dev/null || echo "[DEBUG] Module directory does not exist yet"
+
 pushd "$MODULE_DIR"
     if [ -f "./README.md" ]; then
-        echo "Submodule $MODULE_DIR found. Updating to latest commit on origin main branch..."
+        echo "[DEBUG] Submodule $MODULE_DIR found. Updating to latest commit on origin main branch..."
+        echo "[DEBUG] Current git remote:"
+        git remote -v
+        echo "[DEBUG] Fetching from origin main..."
         git fetch origin main
+        echo "[DEBUG] Checking out origin/main..."
         git checkout origin/main
+        echo "[DEBUG] Current commit: $(git rev-parse HEAD)"
     else
-        echo "Submodule $MODULE_DIR not found or not initialized. Initializing submodule..."
+        echo "[DEBUG] Submodule $MODULE_DIR not found or not initialized. Initializing submodule..."
+        echo "[DEBUG] Running: git submodule update --init --recursive ."
         git submodule update --init --recursive .
+        echo "[DEBUG] Submodule initialization complete"
     fi
+    echo "[DEBUG] Submodule status:"
+    git submodule status || echo "[DEBUG] No submodules in this directory"
 popd
 
 # Run deployment script
