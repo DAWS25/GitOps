@@ -43,3 +43,6 @@ pnpm-debug.log*
 
 # Local secrets clone
 modules/GitOps-Secrets/
+
+.aws-sam
+GitOps-Secrets
