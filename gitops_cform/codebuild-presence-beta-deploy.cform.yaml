@@ -1,0 +1,134 @@
+# aws cloudformation deploy --stack-name presence-beta-deploy --template-file gitops_cform/codebuild-presence-beta-deploy.cform.yaml --capabilities CAPABILITY_IAM
+AWSTemplateFormatVersion: 2010-09-09
+Description: CodeBuild project for Presence beta deployment
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: presence-beta-deploy
+    Description: Name of the CodeBuild project
+
+  SourceRepository:
+    Type: String
+    Default: https://github.com/DAWS25/GitOps.git
+    Description: Source repository URL
+
+  SourceBranch:
+    Type: String
+    Default: main
+    Description: Source branch to build
+
+  ComputeType:
+    Type: String
+    Default: BUILD_GENERAL1_SMALL
+    AllowedValues:
+      - BUILD_GENERAL1_SMALL
+      - BUILD_GENERAL1_MEDIUM
+      - BUILD_GENERAL1_LARGE
+    Description: CodeBuild compute type
+
+  BuildImage:
+    Type: String
+    Default: aws/codebuild/amazonlinux2-x86_64-standard:5.0
+    Description: CodeBuild Docker image
+
+Resources:
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-codebuild-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+        - arn:aws:iam::aws:policy/AWSCloudFormationFullAccess
+        - arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess
+
+  CodeBuildDefaultPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub "${ProjectName}-default-policy"
+      Roles:
+        - !Ref CodeBuildServiceRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource:
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${ProjectName}"
+              - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${ProjectName}:*"
+          - Effect: Allow
+            Action:
+              - codebuild:CreateReportGroup
+              - codebuild:CreateReport
+              - codebuild:UpdateReport
+              - codebuild:BatchPutTestCases
+              - codebuild:BatchPutCodeCoverages
+            Resource:
+              - !Sub "arn:aws:codebuild:${AWS::Region}:${AWS::AccountId}:report-group/${ProjectName}-*"
+          - Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource:
+              - !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:*"
+          - Effect: Allow
+            Action:
+              - ecr:GetAuthorizationToken
+              - ecr:BatchCheckLayerAvailability
+              - ecr:GetDownloadUrlForLayer
+              - ecr:BatchGetImage
+            Resource: "*"
+
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Ref ProjectName
+      Description: Presence beta deployment build project
+      ServiceRole: !GetAtt CodeBuildServiceRole.Arn
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: !Ref ComputeType
+        Image: !Ref BuildImage
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: ENV_GRADE
+            Value: beta
+          - Name: ENV_PROJECT
+            Value: Presence
+      Source:
+        Type: GITHUB
+        Location: !Ref SourceRepository
+        BuildSpec: scripts/Presence/beta-deploy.build.yaml
+        GitCloneDepth: 1
+      SourceVersion: !Ref SourceBranch
+      TimeoutInMinutes: 30
+      QueuedTimeoutInMinutes: 60
+      LogsConfig:
+        CloudWatchLogs:
+          Status: ENABLED
+          GroupName: !Sub "/aws/codebuild/${ProjectName}"
+
+Outputs:
+  CodeBuildProjectName:
+    Description: CodeBuild project name
+    Value: !Ref CodeBuildProject
+
+  CodeBuildProjectArn:
+    Description: CodeBuild project ARN
+    Value: !GetAtt CodeBuildProject.Arn
+
+  CodeBuildServiceRoleArn:
+    Description: CodeBuild service role ARN
+    Value: !GetAtt CodeBuildServiceRole.Arn

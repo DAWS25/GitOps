@@ -69,9 +69,9 @@ elif command -v yum &> /dev/null; then
         echo "terraform already installed"
     fi
     
-    # Install system packages
+    # Install system packages (use curl-minimal on Amazon Linux to avoid conflicts)
     PACKAGES_TO_INSTALL=""
-    for pkg in git curl unzip wget zip mesa-libGLU; do
+    for pkg in git curl-minimal unzip wget zip mesa-libGLU; do
         if ! rpm -q "$pkg" &>/dev/null; then
             PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL $pkg"
         fi
