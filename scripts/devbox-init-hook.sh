@@ -45,13 +45,6 @@ if command -v apt-get &> /dev/null; then
     fi
 elif command -v yum &> /dev/null; then
     echo "Detected yum package manager. Installing common dependencies..."
-    
-    # Remove curl-minimal if it exists to avoid conflicts with curl package
-    if rpm -q curl-minimal &>/dev/null; then
-        echo "Removing curl-minimal to avoid package conflicts..."
-        sudo yum remove -y curl-minimal
-    fi
-    
     sudo yum update -y
     
     # Setup HashiCorp repository for yum
@@ -76,9 +69,9 @@ elif command -v yum &> /dev/null; then
         echo "terraform already installed"
     fi
     
-    # Install system packages
+    # Install system packages (use curl-minimal on Amazon Linux to avoid conflicts)
     PACKAGES_TO_INSTALL=""
-    for pkg in git curl unzip wget zip mesa-libGLU; do
+    for pkg in git curl-minimal unzip wget zip mesa-libGLU; do
         if ! rpm -q "$pkg" &>/dev/null; then
             PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL $pkg"
         fi
