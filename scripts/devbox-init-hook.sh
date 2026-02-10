@@ -47,6 +47,20 @@ elif command -v yum &> /dev/null; then
     echo "Detected yum package manager. Installing common dependencies..."
     sudo yum update -y
     
+    # Setup HashiCorp repository for yum
+    if [ ! -f /etc/yum.repos.d/hashicorp.repo ]; then
+        echo "Setting up HashiCorp repository..."
+        sudo yum install -y yum-utils
+        # Detect if Amazon Linux or RHEL/CentOS
+        if grep -q "Amazon Linux" /etc/os-release 2>/dev/null; then
+            sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
+        else
+            sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/RHEL/hashicorp.repo
+        fi
+    else
+        echo "HashiCorp repository already configured"
+    fi
+    
     # Install core dependencies if not already present
     if ! command -v terraform &> /dev/null; then
         echo "Installing terraform..."
