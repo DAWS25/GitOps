@@ -1,6 +1,11 @@
 version: 0.2
 
 phases:
+  pre_build:
+    commands:
+      # Configure git to use GITHUB_TOKEN for authentication with submodules
+      - git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "git@github.com:"
+      - git submodule update --init --recursive
   build:
     commands:
       # 1. adicionar o clone no script de deploy
