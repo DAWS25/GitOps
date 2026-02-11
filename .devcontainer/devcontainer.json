@@ -16,8 +16,6 @@
 
   "forwardPorts": [8080, 8443, 3000],
 
-  "postCreateCommand": "./.devcontainer/post-create.sh",
-
   "remoteEnv": {
     "PATH": "${containerWorkspaceFolder}/.devbox/nix/profile/default/bin:${containerEnv:PATH}"
   },
