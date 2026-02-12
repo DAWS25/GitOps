@@ -4,7 +4,11 @@ set -x # Enable debug mode, avoid commiting this line to prevent leaking variabl
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 REPO_DIR="$( dirname "$DIR")"
 pushd "$REPO_DIR"
-echo "script [$0] started at [$(pwd)]"
+
+log_ts() { echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] $*"; }
+export -f log_ts
+
+log_ts "script [$0] started at [$(pwd)]"
 #!
 
 # Reusable deployment script
@@ -14,7 +18,7 @@ export ENV_SECRETS_DIR="$ENV_SECRETS_REPO/env/$ENV_ID"
 export MODULE_DIR="$REPO_DIR/modules/$ENV_PROJECT"
 
 # If $ENV_SECRETS_DIR/.envrc exists, load it
-echo "Loading environment variables from $ENV_SECRETS_DIR/.envrc"
+log_ts "Loading environment variables from $ENV_SECRETS_DIR/.envrc"
 if [ -f "$ENV_SECRETS_DIR/.envrc" ]; then
   source "$ENV_SECRETS_DIR/.envrc"
 else
@@ -23,7 +27,7 @@ else
 fi
 
 # check if the submodule in MOUDLE_DIR exists. if it is not initialized, initialize it. update to latest commit on origin main branch.
-echo "[DEBUG] Checking submodule: $MODULE_DIR"
+log_ts "Checking submodule: $MODULE_DIR"
 echo "[DEBUG] Current directory: $(pwd)"
 
 # Configure git to use HTTPS with token if available, otherwise use HTTPS without token
@@ -72,8 +76,9 @@ popd
 
 # Run deployment script
 export TF_VAR_env_id="$ENV_ID"
+log_ts "Running module deploy: $MODULE_DIR/scripts/env-deploy.sh"
 source "$MODULE_DIR/scripts/env-deploy.sh"
 
 #!
 popd
-echo "script [$0] completed"
+log_ts "script [$0] completed"
