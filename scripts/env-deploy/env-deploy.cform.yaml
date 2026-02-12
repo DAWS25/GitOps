@@ -132,6 +132,10 @@ Resources:
           MountPoint: /nix
           Identifier: nix_cache
           MountOptions: nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport
+      Cache:
+        Type: LOCAL
+        Modes:
+          - LOCAL_DOCKER_LAYER_CACHE
       TimeoutInMinutes: 60
       QueuedTimeoutInMinutes: 60
       LogsConfig:
