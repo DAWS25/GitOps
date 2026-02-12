@@ -1,0 +1,40 @@
+# aws cloudformation deploy --stack-name codebuild-general-role --template-file daws25/gitops-iam-roles/codebuild-general-role.cform.yaml --capabilities CAPABILITY_NAMED_IAM
+AWSTemplateFormatVersion: 2010-09-09
+Description: General-purpose IAM Role for CodeBuild with full access to all AWS services
+
+Parameters:
+  RoleName:
+    Type: String
+    Default: codebuild-general-role
+    Description: Name of the IAM role
+
+Resources:
+  CodeBuildServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref RoleName
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      Tags:
+        - Key: ManagedBy
+          Value: CloudFormation
+
+Outputs:
+  CodeBuildServiceRoleArn:
+    Description: CodeBuild service role ARN
+    Value: !GetAtt CodeBuildServiceRole.Arn
+    Export:
+      Name: !Sub "${RoleName}-arn"
+
+  CodeBuildServiceRoleName:
+    Description: CodeBuild service role name
+    Value: !Ref CodeBuildServiceRole
+    Export:
+      Name: !Sub "${RoleName}-name"

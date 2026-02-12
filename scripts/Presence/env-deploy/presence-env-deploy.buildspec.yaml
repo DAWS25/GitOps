@@ -1,0 +1,16 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      # Configure git to use GITHUB_TOKEN for authentication
+      - git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "git@github.com:"
+      - git config --global url."https://${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+      # Initialize submodules
+      - git submodule update --init --recursive
+      # Link secondary source (GitOps-Secrets) as sibling directory
+      - ln -sf "$CODEBUILD_SRC_DIR_GitOps_Secrets" "$CODEBUILD_SRC_DIR/../GitOps-Secrets"
+  build:
+    commands:
+      - ./scripts/Presence/beta-deploy.sh
+

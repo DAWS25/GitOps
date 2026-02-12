@@ -6,6 +6,10 @@ echo "script [$0] started"
 #!
 aws --version
 cdk --version
+pushd ..
+find .
+popd
+echo "Sanity check completed"
 #!
 popd
 echo "script [$0] completed"

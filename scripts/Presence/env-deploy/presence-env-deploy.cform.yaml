@@ -1,0 +1,113 @@
+# aws cloudformation deploy --stack-name presence-env-deploy --template-file scripts/Presence/env-deploy/presence-env-deploy.cform.yaml --capabilities CAPABILITY_IAM
+AWSTemplateFormatVersion: 2010-09-09
+Description: CodeBuild project for Presence environment deployment
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: presence-env-deploy
+    Description: Name of the CodeBuild project
+
+  SourceRepository:
+    Type: String
+    Default: https://github.com/DAWS25/GitOps.git
+    Description: Source repository URL
+
+  SecretsRepository:
+    Type: String
+    Default: https://github.com/DAWS25/GitOps-Secrets.git
+    Description: Secrets repository URL
+
+  SourceBranch:
+    Type: String
+    Default: main
+    Description: Source branch to build
+
+  BuildSpec:
+    Type: String
+    Default: scripts/Presence/env-deploy/presence-env-deploy.buildspec.yaml
+    Description: Path to the buildspec file
+
+  ComputeType:
+    Type: String
+    Default: BUILD_GENERAL1_SMALL
+    AllowedValues:
+      - BUILD_GENERAL1_SMALL
+      - BUILD_GENERAL1_MEDIUM
+      - BUILD_GENERAL1_LARGE
+    Description: CodeBuild compute type
+
+  BuildImage:
+    Type: String
+    Default: aws/codebuild/amazonlinux2-x86_64-standard:5.0
+    Description: CodeBuild Docker image
+
+  ServiceRoleExport:
+    Type: String
+    Default: codebuild-general-role-arn
+    Description: CloudFormation export name for the CodeBuild service role ARN
+
+  GitHubTokenSecret:
+    Type: String
+    Default: GITHUB_TOKEN
+    Description: Secrets Manager secret name containing the GitHub personal access token
+
+Resources:
+  CodeBuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Ref ProjectName
+      Description: !Sub "${ProjectName} build project"
+      ServiceRole:
+        Fn::ImportValue: !Ref ServiceRoleExport
+      Artifacts:
+        Type: NO_ARTIFACTS
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: !Ref ComputeType
+        Image: !Ref BuildImage
+        PrivilegedMode: true
+        EnvironmentVariables:
+          - Name: ENV_GRADE
+            Value: beta
+          - Name: ENV_PROJECT
+            Value: Presence
+          - Name: GITHUB_TOKEN
+            Type: SECRETS_MANAGER
+            Value: !Ref GitHubTokenSecret
+      Source:
+        Type: GITHUB
+        Location: !Ref SourceRepository
+        BuildSpec: !Ref BuildSpec
+        GitCloneDepth: 1
+      SourceVersion: !Ref SourceBranch
+      SecondarySources:
+        - Type: GITHUB
+          SourceIdentifier: GitOps_Secrets
+          Location: !Ref SecretsRepository
+          GitCloneDepth: 1
+      SecondarySourceVersions:
+        - SourceIdentifier: GitOps_Secrets
+          SourceVersion: !Ref SourceBranch
+      TimeoutInMinutes: 30
+      QueuedTimeoutInMinutes: 60
+      LogsConfig:
+        CloudWatchLogs:
+          Status: ENABLED
+          GroupName: !Sub "/aws/codebuild/${ProjectName}"
+      Tags:
+        - Key: ManagedBy
+          Value: CloudFormation
+
+Outputs:
+  CodeBuildProjectName:
+    Description: CodeBuild project name
+    Value: !Ref CodeBuildProject
+    Export:
+      Name: !Sub "${ProjectName}-name"
+
+  CodeBuildProjectArn:
+    Description: CodeBuild project ARN
+    Value: !GetAtt CodeBuildProject.Arn
+    Export:
+      Name: !Sub "${ProjectName}-arn"

@@ -1,0 +1,44 @@
+# aws cloudformation deploy --stack-name gitops-github-connection --template-file daws25/gitops-github-connection/github-connection.cform.yaml --capabilities CAPABILITY_IAM
+AWSTemplateFormatVersion: 2010-09-09
+Description: GitHub connection for CodeBuild via AWS CodeConnections (formerly CodeStar Connections)
+
+Parameters:
+  ConnectionName:
+    Type: String
+    Default: gitops-github-connection
+    Description: Name of the GitHub connection
+
+  ProviderType:
+    Type: String
+    Default: GitHub
+    AllowedValues:
+      - GitHub
+      - GitHubEnterpriseServer
+    Description: The source provider type
+
+Resources:
+  GitHubConnection:
+    Type: AWS::CodeConnections::Connection
+    Properties:
+      ConnectionName: !Ref ConnectionName
+      ProviderType: !Ref ProviderType
+      Tags:
+        - Key: ManagedBy
+          Value: CloudFormation
+
+Outputs:
+  ConnectionArn:
+    Description: The ARN of the GitHub connection (use in CodeBuild Source.Auth.Resource)
+    Value: !GetAtt GitHubConnection.ConnectionArn
+    Export:
+      Name: !Sub "${ConnectionName}-arn"
+
+  ConnectionName:
+    Description: The name of the GitHub connection
+    Value: !Ref ConnectionName
+    Export:
+      Name: !Sub "${ConnectionName}-name"
+
+  ConnectionStatus:
+    Description: The status of the connection (PENDING until authorized in the console)
+    Value: !GetAtt GitHubConnection.ConnectionStatus
