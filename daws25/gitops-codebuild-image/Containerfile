@@ -1,0 +1,48 @@
+## gitops-codebuild-image
+## Custom CodeBuild image with all tools pre-installed
+## Base: aws/codebuild/amazonlinux2-x86_64-standard:5.0
+##
+## Pre-installed tools:
+##   - AWS CLI v2 (from base image)
+##   - AWS SAM CLI
+##   - AWS CDK CLI
+##   - Terraform
+##   - Node.js LTS (via nvm)
+##   - Git, curl, unzip, wget, zip
+##
+FROM public.ecr.aws/codebuild/amazonlinux2-x86_64-standard:5.0
+
+## System packages and HashiCorp repo
+RUN yum install -y yum-utils && \
+    yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo && \
+    yum install -y terraform git curl-minimal unzip wget zip && \
+    yum clean all && \
+    rm -rf /var/cache/yum
+
+## AWS SAM CLI
+RUN wget -q https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip -O /tmp/sam.zip && \
+    unzip -q /tmp/sam.zip -d /tmp/sam-installation && \
+    /tmp/sam-installation/install && \
+    rm -rf /tmp/sam.zip /tmp/sam-installation
+
+## Node.js LTS via nvm (for CDK and general use)
+ENV NVM_DIR=/root/.nvm
+RUN curl -s -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash && \
+    . "$NVM_DIR/nvm.sh" && \
+    nvm install --lts && \
+    nvm alias default lts/* && \
+    nvm use default && \
+    npm install -g aws-cdk && \
+    ln -sf "$(which node)" /usr/local/bin/node && \
+    ln -sf "$(which npm)" /usr/local/bin/npm && \
+    ln -sf "$(which npx)" /usr/local/bin/npx && \
+    ln -sf "$(which cdk)" /usr/local/bin/cdk
+
+## Verify installs
+RUN echo "=== Tool versions ===" && \
+    aws --version && \
+    sam --version && \
+    terraform version && \
+    node --version && \
+    cdk --version && \
+    git --version
