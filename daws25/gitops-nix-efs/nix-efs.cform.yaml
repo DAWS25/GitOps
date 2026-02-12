@@ -1,0 +1,152 @@
+# aws cloudformation deploy --stack-name nix-efs --template-file daws25/gitops-nix-efs/nix-efs.cform.yaml
+AWSTemplateFormatVersion: 2010-09-09
+Description: EFS file system for Nix store cache in CodeBuild tasks
+
+Parameters:
+  FileSystemName:
+    Type: String
+    Default: nix-efs
+    Description: Name tag for the EFS file system
+
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC where mount targets will be created
+
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Subnets for EFS mount targets (one per AZ)
+
+  PerformanceMode:
+    Type: String
+    Default: generalPurpose
+    AllowedValues:
+      - generalPurpose
+      - maxIO
+    Description: EFS performance mode
+
+  ThroughputMode:
+    Type: String
+    Default: elastic
+    AllowedValues:
+      - bursting
+      - provisioned
+      - elastic
+    Description: EFS throughput mode
+
+  LifecyclePolicyTransition:
+    Type: String
+    Default: AFTER_7_DAYS
+    AllowedValues:
+      - AFTER_7_DAYS
+      - AFTER_14_DAYS
+      - AFTER_30_DAYS
+      - AFTER_60_DAYS
+      - AFTER_90_DAYS
+    Description: Transition files to Infrequent Access after this period
+
+Resources:
+  NixEfsFileSystem:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      PerformanceMode: !Ref PerformanceMode
+      ThroughputMode: !Ref ThroughputMode
+      Encrypted: true
+      LifecyclePolicies:
+        - TransitionToIA: !Ref LifecyclePolicyTransition
+      FileSystemTags:
+        - Key: Name
+          Value: !Ref FileSystemName
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  NixEfsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub "Security group for ${FileSystemName} EFS mount targets"
+      GroupName: !Sub "${FileSystemName}-sg"
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 2049
+          ToPort: 2049
+          CidrIp: 0.0.0.0/0
+          Description: NFS access from VPC
+      Tags:
+        - Key: Name
+          Value: !Sub "${FileSystemName}-sg"
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  NixEfsMountTarget0:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref NixEfsFileSystem
+      SubnetId: !Select [0, !Ref SubnetIds]
+      SecurityGroups:
+        - !Ref NixEfsSecurityGroup
+
+  NixEfsMountTarget1:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref NixEfsFileSystem
+      SubnetId: !Select [1, !Ref SubnetIds]
+      SecurityGroups:
+        - !Ref NixEfsSecurityGroup
+
+  NixEfsMountTarget2:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref NixEfsFileSystem
+      SubnetId: !Select [2, !Ref SubnetIds]
+      SecurityGroups:
+        - !Ref NixEfsSecurityGroup
+
+  NixEfsAccessPoint:
+    Type: AWS::EFS::AccessPoint
+    Properties:
+      FileSystemId: !Ref NixEfsFileSystem
+      PosixUser:
+        Uid: "0"
+        Gid: "0"
+      RootDirectory:
+        Path: /nix
+        CreationInfo:
+          OwnerUid: "0"
+          OwnerGid: "0"
+          Permissions: "755"
+      AccessPointTags:
+        - Key: Name
+          Value: !Sub "${FileSystemName}-nix-ap"
+        - Key: ManagedBy
+          Value: CloudFormation
+
+Outputs:
+  FileSystemId:
+    Description: EFS file system ID
+    Value: !Ref NixEfsFileSystem
+    Export:
+      Name: !Sub "${FileSystemName}-id"
+
+  FileSystemArn:
+    Description: EFS file system ARN
+    Value: !GetAtt NixEfsFileSystem.Arn
+    Export:
+      Name: !Sub "${FileSystemName}-arn"
+
+  SecurityGroupId:
+    Description: Security group ID for EFS mount targets
+    Value: !Ref NixEfsSecurityGroup
+    Export:
+      Name: !Sub "${FileSystemName}-sg-id"
+
+  AccessPointId:
+    Description: EFS access point ID for /nix
+    Value: !Ref NixEfsAccessPoint
+    Export:
+      Name: !Sub "${FileSystemName}-ap-id"
+
+  AccessPointArn:
+    Description: EFS access point ARN
+    Value: !GetAtt NixEfsAccessPoint.Arn
+    Export:
+      Name: !Sub "${FileSystemName}-ap-arn"

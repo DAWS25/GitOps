@@ -14,7 +14,11 @@ echo "Starting CodeBuild project: $PROJECT_NAME"
 echo ""
 
 # Start the build
-BUILD_JSON=$(aws codebuild start-build --project-name "$PROJECT_NAME")
+BUILD_JSON=$(aws codebuild start-build \
+    --project-name "$PROJECT_NAME" \
+    --environment-variables-override \
+        "name=ENV_PROJECT,value=Presence,type=PLAINTEXT" \
+        "name=ENV_GRADE,value=beta,type=PLAINTEXT")
 BUILD_ID=$(echo "$BUILD_JSON" | grep -o '"id": "[^"]*"' | head -1 | cut -d'"' -f4)
 
 if [ -z "$BUILD_ID" ]; then

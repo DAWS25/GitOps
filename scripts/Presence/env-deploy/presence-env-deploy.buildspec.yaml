@@ -4,5 +4,4 @@ phases:
   build:
     commands:
       - curl -fsSL https://get.jetpack.io/devbox | bash -s -- --force
-      - devbox run ./scripts/sanity-check.sh
-      
+      - devbox run ./scripts/Presence/env-deploy.sh
