@@ -3,5 +3,6 @@ version: 0.2
 phases:
   build:
     commands:
-      - ./scripts/Presence/beta-deploy.sh
-
+      - curl -fsSL https://get.jetpack.io/devbox | bash -s -- --force
+      - devbox run ./scripts/sanity-check.sh
+      
