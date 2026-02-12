@@ -6,25 +6,27 @@ pushd "$REPO_DIR"
 echo "script [$0] started at [$(pwd)]"
 ##
 
-STACK_NAME="nix-efs"
+STACK_NAME="gitops-nix-efs"
 TEMPLATE_FILE="$DIR/nix-efs.cform.yaml"
 
-# Get default VPC
-VPC_ID=$(aws ec2 describe-vpcs --filters "Name=isDefault,Values=true" \
-    --query "Vpcs[0].VpcId" --output text)
+# Get gitops-vpc VPC and private subnet
+VPC_ID=$(aws cloudformation describe-stacks \
+    --stack-name gitops-vpc \
+    --query "Stacks[0].Outputs[?OutputKey=='VpcId'].OutputValue" \
+    --output text)
 
 if [ -z "$VPC_ID" ] || [ "$VPC_ID" = "None" ]; then
-    echo "Error: No default VPC found"
+    echo "Error: gitops-vpc stack not found or has no VpcId output"
     exit 1
 fi
 
-# Get first 3 subnets from the VPC (one per AZ)
-SUBNET_IDS=$(aws ec2 describe-subnets \
-    --filters "Name=vpc-id,Values=$VPC_ID" \
-    --query "Subnets[*].SubnetId" --output text | tr '\t' ',' | cut -d, -f1-3)
+SUBNET_IDS=$(aws cloudformation describe-stacks \
+    --stack-name gitops-vpc \
+    --query "Stacks[0].Outputs[?OutputKey=='PrivateSubnetIds'].OutputValue" \
+    --output text)
 
 if [ -z "$SUBNET_IDS" ]; then
-    echo "Error: No subnets found in VPC $VPC_ID"
+    echo "Error: No private subnets found in gitops-vpc"
     exit 1
 fi
 

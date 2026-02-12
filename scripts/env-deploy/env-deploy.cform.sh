@@ -6,7 +6,7 @@ pushd "$REPO_DIR"
 echo "script [$0] started at [$(pwd)]"
 ##
 
-STACK_NAME="env-deploy"
+STACK_NAME="codebuild-env-deploy"
 TEMPLATE_FILE="$DIR/env-deploy.cform.yaml"
 
 # Derive source repository URL from git remote

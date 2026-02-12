@@ -85,22 +85,6 @@ Resources:
       SecurityGroups:
         - !Ref NixEfsSecurityGroup
 
-  NixEfsMountTarget1:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref NixEfsFileSystem
-      SubnetId: !Select [1, !Ref SubnetIds]
-      SecurityGroups:
-        - !Ref NixEfsSecurityGroup
-
-  NixEfsMountTarget2:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref NixEfsFileSystem
-      SubnetId: !Select [2, !Ref SubnetIds]
-      SecurityGroups:
-        - !Ref NixEfsSecurityGroup
-
   NixEfsAccessPoint:
     Type: AWS::EFS::AccessPoint
     Properties:

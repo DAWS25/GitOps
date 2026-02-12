@@ -62,6 +62,16 @@ Parameters:
     Default: project
     Description: Project name for the environment deployment
 
+  GitOpsVpcName:
+    Type: String
+    Default: gitops-vpc
+    Description: Name of the GitOps VPC stack (used to import exported values)
+
+  NixEfsName:
+    Type: String
+    Default: nix-efs
+    Description: Name of the Nix EFS stack (used to import exported values)
+
 Resources:
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
@@ -99,6 +109,22 @@ Resources:
       SecondarySourceVersions:
         - SourceIdentifier: GitOps_Secrets
           SourceVersion: !Ref SourceBranch
+      VpcConfig:
+        VpcId:
+          Fn::ImportValue: !Sub "${GitOpsVpcName}-id"
+        Subnets:
+          - Fn::ImportValue: !Sub "${GitOpsVpcName}-private-id"
+        SecurityGroupIds:
+          - Fn::ImportValue: !Sub "${NixEfsName}-sg-id"
+      FileSystemLocations:
+        - Type: EFS
+          Location: !Sub
+            - "${FileSystemId}.efs.${AWS::Region}.amazonaws.com:/nix"
+            - FileSystemId:
+                Fn::ImportValue: !Sub "${NixEfsName}-id"
+          MountPoint: /nix
+          Identifier: nix_cache
+          MountOptions: nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport
       TimeoutInMinutes: 30
       QueuedTimeoutInMinutes: 60
       LogsConfig:
