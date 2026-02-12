@@ -35,6 +35,7 @@ aws cloudformation deploy \
     --parameter-overrides \
         ProjectName="$STACK_NAME" \
         BuildSpec="scripts/env-deploy/env-deploy.buildspec.yaml" \
+        ComputeType="BUILD_GENERAL1_MEDIUM" \
         SourceRepository="$SOURCE_REPO" \
         SourceBranch="$SOURCE_BRANCH" \
     --capabilities CAPABILITY_IAM \
