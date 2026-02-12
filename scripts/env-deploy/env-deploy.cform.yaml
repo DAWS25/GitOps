@@ -1,11 +1,11 @@
-# aws cloudformation deploy --stack-name presence-env-deploy --template-file scripts/Presence/env-deploy/presence-env-deploy.cform.yaml --capabilities CAPABILITY_IAM
+# aws cloudformation deploy --stack-name env-deploy --template-file scripts/env-deploy/env-deploy.cform.yaml --capabilities CAPABILITY_IAM
 AWSTemplateFormatVersion: 2010-09-09
-Description: CodeBuild project for Presence environment deployment
+Description: CodeBuild project for environment deployment
 
 Parameters:
   ProjectName:
     Type: String
-    Default: presence-env-deploy
+    Default: env-deploy
     Description: Name of the CodeBuild project
 
   SourceRepository:
@@ -25,7 +25,7 @@ Parameters:
 
   BuildSpec:
     Type: String
-    Default: scripts/Presence/env-deploy/presence-env-deploy.buildspec.yaml
+    Default: scripts/env-deploy/env-deploy.buildspec.yaml
     Description: Path to the buildspec file
 
   ComputeType:
