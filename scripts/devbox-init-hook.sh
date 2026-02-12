@@ -31,7 +31,7 @@ if command -v apt-get &> /dev/null; then
     
     # Install system packages
     PACKAGES_TO_INSTALL=""
-    for pkg in git curl unzip wget xz-utils zip libglu1-mesa; do
+    for pkg in git curl unzip wget xz-utils zip; do
         if ! dpkg -l | grep -q "^ii  $pkg "; then
             PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL $pkg"
         fi
@@ -71,7 +71,7 @@ elif command -v yum &> /dev/null; then
     
     # Install system packages (use curl-minimal on Amazon Linux to avoid conflicts)
     PACKAGES_TO_INSTALL=""
-    for pkg in git curl-minimal unzip wget zip mesa-libGLU; do
+    for pkg in git curl-minimal unzip wget zip; do
         if ! rpm -q "$pkg" &>/dev/null; then
             PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL $pkg"
         fi
@@ -86,22 +86,6 @@ elif command -v yum &> /dev/null; then
 else
     echo "No supported package manager found (apt-get or yum)"
 fi
-
-# Flutter setup
-# https://docs.flutter.dev/install/manual
-FLUTTER_PACKAGE_URL="https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_3.38.7-stable.tar.xz"
-if ! command -v flutter &> /dev/null; then
-    echo "Flutter not found, installing..."
-    curl -s -L -o /tmp/flutter_linux_latest.tar.xz "$FLUTTER_PACKAGE_URL"
-    tar xf /tmp/flutter_linux_latest.tar.xz -C "$HOME"
-    mkdir -p "$HOME/.local/bin"
-    ln -sf "$HOME/flutter/bin/flutter" "$HOME/.local/bin/flutter"
-    ln -sf "$HOME/flutter/bin/dart" "$HOME/.local/bin/dart"
-    rm /tmp/flutter_linux_latest.tar.xz
-    yes | flutter doctor --android-licenses >/dev/null 2>&1 || true
-  fi
-
-
 
 # SAM Setup
 SAM_URL="https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip"
@@ -133,8 +117,6 @@ command -v aws &>/dev/null && aws --version || echo "aws CLI not found"
 command -v cdk &>/dev/null && cdk --version || echo "AWS CDK not found"
 command -v sam &>/dev/null && sam --version || echo "AWS SAM not found"
 command -v terraform &>/dev/null && terraform version || echo "Terraform not found"
-command -v flutter &>/dev/null && flutter --version || echo "Flutter not found"
-command -v dart &>/dev/null && dart --version || echo "Dart not found"
 command -v java &>/dev/null && java --version || echo "Java not found"
 
 # SSH key setup
