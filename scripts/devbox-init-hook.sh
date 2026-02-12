@@ -9,7 +9,7 @@ echo "script [$0] started"
 # Install common dependencies
 if command -v apt-get &> /dev/null; then
     echo "Detected apt-get package manager. Installing common dependencies..."
-    sudo apt-get update -y
+    # sudo apt-get update -y  # Skipped: slow on ephemeral containers, packages pre-installed in CodeBuild image
     
     # Setup HashiCorp repository
     if [ ! -f /usr/share/keyrings/hashicorp-archive-keyring.gpg ]; then
@@ -29,23 +29,11 @@ if command -v apt-get &> /dev/null; then
         echo "terraform already installed"
     fi
     
-    # Install system packages
-    PACKAGES_TO_INSTALL=""
-    for pkg in git curl unzip wget xz-utils zip; do
-        if ! dpkg -l | grep -q "^ii  $pkg "; then
-            PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL $pkg"
-        fi
-    done
-    
-    if [ ! -z "$PACKAGES_TO_INSTALL" ]; then
-        echo "Installing packages:$PACKAGES_TO_INSTALL"
-        sudo apt-get install -y $PACKAGES_TO_INSTALL
-    else
-        echo "All required packages already installed"
-    fi
+    # System packages (git, curl, unzip, wget, zip) are pre-installed in CodeBuild base image
+    echo "Skipping system packages (pre-installed in CodeBuild image)"
 elif command -v yum &> /dev/null; then
     echo "Detected yum package manager. Installing common dependencies..."
-    sudo yum update -y
+    # sudo yum update -y  # Skipped: slow (~133MB download) on ephemeral containers, packages pre-installed in CodeBuild image
     
     # Setup HashiCorp repository for yum
     if [ ! -f /etc/yum.repos.d/hashicorp.repo ]; then
@@ -69,45 +57,37 @@ elif command -v yum &> /dev/null; then
         echo "terraform already installed"
     fi
     
-    # Install system packages (use curl-minimal on Amazon Linux to avoid conflicts)
-    PACKAGES_TO_INSTALL=""
-    for pkg in git curl-minimal unzip wget zip; do
-        if ! rpm -q "$pkg" &>/dev/null; then
-            PACKAGES_TO_INSTALL="$PACKAGES_TO_INSTALL $pkg"
-        fi
-    done
-    
-    if [ ! -z "$PACKAGES_TO_INSTALL" ]; then
-        echo "Installing packages:$PACKAGES_TO_INSTALL"
-        sudo yum install -y $PACKAGES_TO_INSTALL
-    else
-        echo "All required packages already installed"
-    fi
+    # System packages (git, curl, unzip, wget, zip) are pre-installed in CodeBuild base image
+    echo "Skipping system packages (pre-installed in CodeBuild image)"
 else
     echo "No supported package manager found (apt-get or yum)"
 fi
 
-# SAM Setup
-SAM_URL="https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip"
-if ! command -v sam &> /dev/null
-then
+# SAM CLI - pre-installed in CodeBuild base image and custom gitops-codebuild-image
+# Only install if missing (e.g. running outside CodeBuild)
+if ! command -v sam &> /dev/null; then
     echo "AWS SAM CLI not found, installing..."
+    SAM_URL="https://github.com/aws/aws-sam-cli/releases/latest/download/aws-sam-cli-linux-x86_64.zip"
     wget -q $SAM_URL -O "/tmp/aws-sam-cli-linux-x86_64.zip"
     unzip -q /tmp/aws-sam-cli-linux-x86_64.zip -d /tmp/sam-installation
     sudo -n bash -c "cd /tmp/sam-installation && ./install -i /usr/local/aws-cli -b /usr/local/bin" 2>/dev/null || sudo /tmp/sam-installation/install
     rm -rf /tmp/sam-installation /tmp/aws-sam-cli-linux-x86_64.zip
+else
+    echo "SAM CLI already installed: $(sam --version)"
 fi
 
-# Node setup
-NVM_URL="https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh"
+# Node.js - pre-installed in CodeBuild base image and custom gitops-codebuild-image
+# Only install if missing (e.g. running outside CodeBuild)
 if ! command -v node &> /dev/null; then
-   # Setup nodejs using nvm
-  echo "Node.js not found, installing..."
-  curl -s -o- $NVM_URL | bash >/dev/null 2>&1
-  export NVM_DIR="$HOME/.nvm"
-  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-  nvm install --lts >/dev/null 2>&1
-  ln -sf "$(which node)" "$HOME/.local/bin/node"
+    echo "Node.js not found, installing..."
+    NVM_URL="https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh"
+    curl -s -o- $NVM_URL | bash >/dev/null 2>&1
+    export NVM_DIR="$HOME/.nvm"
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+    nvm install --lts >/dev/null 2>&1
+    ln -sf "$(which node)" "$HOME/.local/bin/node"
+else
+    echo "Node.js already installed: $(node --version)"
 fi
 
 
