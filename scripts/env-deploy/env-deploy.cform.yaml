@@ -119,12 +119,15 @@ Resources:
       FileSystemLocations:
         - Type: EFS
           Location: !Sub
-            - "${FileSystemId}.efs.${AWS::Region}.amazonaws.com:/nix"
+            - "${FileSystemId}.efs.${AWS::Region}.amazonaws.com:/"
             - FileSystemId:
                 Fn::ImportValue: !Sub "${NixEfsName}-id"
           MountPoint: /nix
           Identifier: nix_cache
-          MountOptions: nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport
+          MountOptions: !Sub
+            - "nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport,tls,accesspoint=${AccessPointId}"
+            - AccessPointId:
+                Fn::ImportValue: !Sub "${NixEfsName}-ap-id"
       TimeoutInMinutes: 30
       QueuedTimeoutInMinutes: 60
       LogsConfig:
