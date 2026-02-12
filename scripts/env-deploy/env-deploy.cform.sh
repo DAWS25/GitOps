@@ -42,6 +42,8 @@ aws cloudformation deploy \
     --stack-name "$STACK_NAME" \
     --template-file "$TEMPLATE_FILE" \
     --parameter-overrides \
+        ProjectName="$STACK_NAME" \
+        BuildSpec="scripts/env-deploy/env-deploy.buildspec.yaml" \
         SourceRepository="$SOURCE_REPO" \
         SourceBranch="$SOURCE_BRANCH" \
         VpcId="$VPC_ID" \

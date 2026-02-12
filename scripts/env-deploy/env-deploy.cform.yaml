@@ -141,10 +141,10 @@ Outputs:
     Description: CodeBuild project name
     Value: !Ref CodeBuildProject
     Export:
-      Name: !Sub "${ProjectName}-name"
+      Name: !Sub "env-deploy-name"
 
   CodeBuildProjectArn:
     Description: CodeBuild project ARN
     Value: !GetAtt CodeBuildProject.Arn
     Export:
-      Name: !Sub "${ProjectName}-arn"
+      Name: !Sub "env-deploy-arn"
