@@ -56,9 +56,15 @@ pushd "$MODULE_DIR"
         echo "[DEBUG] Current commit: $(git rev-parse HEAD)"
     else
         echo "[DEBUG] Submodule $MODULE_DIR not found or not initialized. Initializing submodule..."
-        echo "[DEBUG] Running: git submodule update --init --recursive ."
-        git submodule update --init --recursive .
+        # Rewrite all submodule URLs from SSH to HTTPS with token before init
+        popd
+        echo "[DEBUG] Rewriting .gitmodules SSH URLs to HTTPS..."
+        sed -i "s|git@github.com:|https://${GITHUB_TOKEN}@github.com/|g" .gitmodules
+        git submodule sync
+        echo "[DEBUG] Running: git submodule update --init --recursive $MODULE_DIR"
+        git submodule update --init --recursive "$MODULE_DIR"
         echo "[DEBUG] Submodule initialization complete"
+        pushd "$MODULE_DIR"
     fi
     echo "[DEBUG] Submodule status:"
     git submodule status || echo "[DEBUG] No submodules in this directory"
