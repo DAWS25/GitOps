@@ -52,6 +52,29 @@ Parameters:
     Default: GITHUB_TOKEN
     Description: Secrets Manager secret name containing the GitHub personal access token
 
+  NixEfsName:
+    Type: String
+    Default: nix-efs
+    Description: Name of the Nix EFS stack (used to import exported values)
+
+  EnvGrade:
+    Type: String
+    Default: alpha
+    Description: Environment grade (e.g. alpha, beta, prod)
+
+  EnvProject:
+    Type: String
+    Default: project
+    Description: Project name for the environment deployment
+
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC for CodeBuild to access EFS
+
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Subnets for CodeBuild VPC configuration
+
 Resources:
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
@@ -69,9 +92,9 @@ Resources:
         PrivilegedMode: true
         EnvironmentVariables:
           - Name: ENV_GRADE
-            Value: beta
+            Value: !Ref EnvGrade
           - Name: ENV_PROJECT
-            Value: Presence
+            Value: !Ref EnvProject
           - Name: GITHUB_TOKEN
             Type: SECRETS_MANAGER
             Value: !Ref GitHubTokenSecret
@@ -89,6 +112,20 @@ Resources:
       SecondarySourceVersions:
         - SourceIdentifier: GitOps_Secrets
           SourceVersion: !Ref SourceBranch
+      VpcConfig:
+        VpcId: !Ref VpcId
+        Subnets: !Ref SubnetIds
+        SecurityGroupIds:
+          - Fn::ImportValue: !Sub "${NixEfsName}-sg-id"
+      FileSystemLocations:
+        - Type: EFS
+          Location: !Sub
+            - "${FileSystemId}.efs.${AWS::Region}.amazonaws.com:/nix"
+            - FileSystemId:
+                Fn::ImportValue: !Sub "${NixEfsName}-id"
+          MountPoint: /nix
+          Identifier: nix_cache
+          MountOptions: nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport
       TimeoutInMinutes: 30
       QueuedTimeoutInMinutes: 60
       LogsConfig:

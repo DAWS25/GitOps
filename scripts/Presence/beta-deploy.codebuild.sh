@@ -6,7 +6,7 @@ pushd "$REPO_DIR"
 echo "script [$0] started at [$(pwd)]"
 ##
 
-PROJECT_NAME="presence-env-deploy"
+PROJECT_NAME="env-deploy"
 LOG_GROUP="/aws/codebuild/${PROJECT_NAME}"
 
 echo ""
