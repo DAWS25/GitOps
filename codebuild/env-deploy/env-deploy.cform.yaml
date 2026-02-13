@@ -1,4 +1,4 @@
-# aws cloudformation deploy --stack-name env-deploy --template-file scripts/env-deploy/env-deploy.cform.yaml --capabilities CAPABILITY_IAM
+# aws cloudformation deploy --stack-name env-deploy --template-file codebuild/env-deploy/env-deploy.cform.yaml --capabilities CAPABILITY_IAM
 AWSTemplateFormatVersion: 2010-09-09
 Description: CodeBuild project for environment deployment
 
@@ -25,7 +25,7 @@ Parameters:
 
   BuildSpec:
     Type: String
-    Default: scripts/env-deploy/env-deploy.buildspec.yaml
+    Default: codebuild/env-deploy/env-deploy.buildspec.yaml
     Description: Path to the buildspec file
 
   ComputeType:
@@ -46,8 +46,7 @@ Parameters:
 
   BuildImage:
     Type: String
-    Default: aws/codebuild/amazonlinux2-x86_64-standard:5.0
-    Description: CodeBuild Docker image
+    Description: Custom Docker image URI (e.g. ECR image)
 
   ServiceRoleExport:
     Type: String
@@ -93,6 +92,7 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: !Ref ComputeType
         Image: !Ref BuildImage
+        ImagePullCredentialsType: SERVICE_ROLE
         PrivilegedMode: true
         EnvironmentVariables:
           - Name: ENV_GRADE

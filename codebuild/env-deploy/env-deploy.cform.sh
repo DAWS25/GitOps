@@ -9,6 +9,11 @@ echo "script [$0] started at [$(pwd)]"
 STACK_NAME="codebuild-env-deploy"
 TEMPLATE_FILE="$DIR/env-deploy.cform.yaml"
 
+# ECR image for CodeBuild
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+REGION=$(aws configure get region || echo "us-east-1")
+BUILD_IMAGE="$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/gitops-ecr:gitops-codebuild-image"
+
 # Derive source repository URL from git remote
 REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
 if [ -z "$REMOTE_URL" ]; then
@@ -34,8 +39,9 @@ aws cloudformation deploy \
     --template-file "$TEMPLATE_FILE" \
     --parameter-overrides \
         ProjectName="$STACK_NAME" \
-        BuildSpec="scripts/env-deploy/env-deploy.buildspec.yaml" \
+        BuildSpec="codebuild/env-deploy/env-deploy.buildspec.yaml" \
         ComputeType="BUILD_GENERAL1_LARGE" \
+        BuildImage="$BUILD_IMAGE" \
         SourceRepository="$SOURCE_REPO" \
         SourceBranch="$SOURCE_BRANCH" \
     --capabilities CAPABILITY_IAM \

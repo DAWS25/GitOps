@@ -1,7 +1,0 @@
-version: 0.2
-
-phases:
-  build:
-    commands:
-      - curl -fsSL https://get.jetpack.io/devbox | bash -s -- --force
-      - devbox run ./scripts/env-deploy.sh
