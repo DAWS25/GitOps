@@ -1,0 +1,24 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: GitHub Token in Parameter Store for CodeBuild
+
+Parameters:
+  GitHubToken:
+    Type: String
+    NoEcho: true
+    Description: GitHub Personal Access Token
+
+Resources:
+  GitHubTokenParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /gitops/github-token
+      Type: String
+      Value: !Ref GitHubToken
+      Description: GitHub token for CodeBuild git operations
+
+Outputs:
+  GitHubTokenParameterName:
+    Description: Name of the SSM Parameter containing the GitHub token
+    Value: !Ref GitHubTokenParameter
+    Export:
+      Name: GitOps-GitHubTokenParameterName
