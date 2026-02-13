@@ -38,6 +38,12 @@ RUN curl -s -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh 
     ln -sf "$(which npx)" /usr/local/bin/npx && \
     ln -sf "$(which cdk)" /usr/local/bin/cdk
 
+## Python 3.12 via pyenv (for SAM build with python3.12 runtime)
+ENV PYENV_ROOT=/root/.pyenv
+ENV PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
+RUN pyenv install -s 3.12 && \
+    pyenv global 3.12
+
 ## Verify installs
 RUN echo "=== Tool versions ===" && \
     aws --version && \
@@ -45,4 +51,5 @@ RUN echo "=== Tool versions ===" && \
     terraform version && \
     node --version && \
     cdk --version && \
+    python --version && \
     git --version

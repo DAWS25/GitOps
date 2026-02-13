@@ -42,6 +42,7 @@ aws cloudformation deploy \
         BuildSpec="codebuild/env-deploy/env-deploy.buildspec.yaml" \
         ComputeType="BUILD_GENERAL1_LARGE" \
         BuildImage="$BUILD_IMAGE" \
+        TenantId="${TENANT_ID:-presence-env}" \
         SourceRepository="$SOURCE_REPO" \
         SourceBranch="$SOURCE_BRANCH" \
     --capabilities CAPABILITY_IAM \

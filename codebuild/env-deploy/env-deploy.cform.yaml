@@ -73,6 +73,11 @@ Parameters:
     Default: gitops-vpc
     Description: Name of the GitOps VPC stack (used to import exported values)
 
+  TenantId:
+    Type: String
+    Default: presence-env
+    Description: Tenant ID for shared account-level resources (VPC, DB)
+
   NixEfsName:
     Type: String
     Default: nix-efs
@@ -99,6 +104,8 @@ Resources:
             Value: !Ref EnvGrade
           - Name: ENV_PROJECT
             Value: !Ref EnvProject
+          - Name: TENANT_ID
+            Value: !Ref TenantId
           - Name: GITHUB_TOKEN
             Type: SECRETS_MANAGER
             Value: !Ref GitHubTokenSecret
