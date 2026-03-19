@@ -1,0 +1,205 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: EKS cluster with Fargate profile importing VPC resources from gitops-vpc exports
+
+Parameters:
+  ClusterName:
+    Type: String
+    Default: gitops-eks
+    Description: Name of the EKS cluster
+
+  ClusterVersion:
+    Type: String
+    Default: "1.35"
+    Description: Kubernetes version for the EKS control plane
+
+  VpcExportPrefix:
+    Type: String
+    Default: gitops-vpc
+    Description: Prefix used by the VPC stack export names
+
+  EndpointPublicAccess:
+    Type: String
+    AllowedValues: ["true", "false"]
+    Default: "true"
+    Description: Allow public API endpoint access
+
+  EndpointPrivateAccess:
+    Type: String
+    AllowedValues: ["true", "false"]
+    Default: "true"
+    Description: Allow private API endpoint access
+
+  FargateProfileName:
+    Type: String
+    Default: default
+    Description: Name of the Fargate profile
+
+Resources:
+  EksClusterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ClusterName}-cluster-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: eks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+      Tags:
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  EksClusterSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub "Security group for ${ClusterName} EKS cluster"
+      VpcId: !ImportValue
+        Fn::Sub: "${VpcExportPrefix}-id"
+      Tags:
+        - Key: Name
+          Value: !Sub "${ClusterName}-cluster-sg"
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  EksCluster:
+    Type: AWS::EKS::Cluster
+    Properties:
+      Name: !Ref ClusterName
+      Version: !Ref ClusterVersion
+      RoleArn: !GetAtt EksClusterRole.Arn
+      ResourcesVpcConfig:
+        EndpointPublicAccess: !Ref EndpointPublicAccess
+        EndpointPrivateAccess: !Ref EndpointPrivateAccess
+        SecurityGroupIds:
+          - !Ref EksClusterSecurityGroup
+        SubnetIds: !Split
+          - ","
+          - !ImportValue
+            Fn::Sub: "${VpcExportPrefix}-private-subnet-ids"
+      AccessConfig:
+        AuthenticationMode: API_AND_CONFIG_MAP
+        BootstrapClusterCreatorAdminPermissions: true
+      Logging:
+        ClusterLogging:
+          EnabledTypes:
+            - Type: api
+            - Type: audit
+            - Type: authenticator
+            - Type: controllerManager
+            - Type: scheduler
+      Tags:
+        - Key: Name
+          Value: !Ref ClusterName
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  FargatePodExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ClusterName}-fargate-pod-execution-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: eks-fargate-pods.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy
+      Tags:
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  EksFargateProfile:
+    Type: AWS::EKS::FargateProfile
+    DependsOn: EksCluster
+    Properties:
+      ClusterName: !Ref EksCluster
+      FargateProfileName: !Ref FargateProfileName
+      PodExecutionRoleArn: !GetAtt FargatePodExecutionRole.Arn
+      Subnets: !Split
+        - ","
+        - !ImportValue
+          Fn::Sub: "${VpcExportPrefix}-private-subnet-ids"
+      Selectors:
+        - Namespace: default
+        - Namespace: kube-system
+      Tags:
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  # Managed CoreDNS addon - ensures proper Fargate scheduling on Fargate-only clusters
+  CoreDnsAddon:
+    Type: AWS::EKS::Addon
+    DependsOn: EksFargateProfile
+    Properties:
+      ClusterName: !Ref EksCluster
+      AddonName: coredns
+      AddonVersion: v1.13.2-eksbuild.3
+      ServiceAccountRoleArn: !GetAtt FargatePodExecutionRole.Arn
+      Tags:
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  # Managed VPC-CNI addon - required for pod networking on Fargate
+  VpcCniAddon:
+    Type: AWS::EKS::Addon
+    DependsOn: EksFargateProfile
+    Properties:
+      ClusterName: !Ref EksCluster
+      AddonName: vpc-cni
+      AddonVersion: v1.21.1-eksbuild.5
+      ServiceAccountRoleArn: !GetAtt FargatePodExecutionRole.Arn
+      Tags:
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  # Managed kube-proxy addon - required for service networking
+  KubeProxyAddon:
+    Type: AWS::EKS::Addon
+    DependsOn: EksFargateProfile
+    Properties:
+      ClusterName: !Ref EksCluster
+      AddonName: kube-proxy
+      AddonVersion: v1.35.0-eksbuild.2
+      Tags:
+        - Key: ManagedBy
+          Value: CloudFormation
+
+Outputs:
+  EksClusterName:
+    Description: EKS cluster name
+    Value: !Ref EksCluster
+
+  EksClusterArn:
+    Description: EKS cluster ARN
+    Value: !GetAtt EksCluster.Arn
+
+  EksClusterEndpoint:
+    Description: EKS API endpoint
+    Value: !GetAtt EksCluster.Endpoint
+
+  EksClusterSecurityGroupId:
+    Description: Security group attached to the EKS cluster
+    Value: !Ref EksClusterSecurityGroup
+
+  FargateProfileArn:
+    Description: ARN of the EKS Fargate profile
+    Value: !GetAtt EksFargateProfile.Arn
+
+  CoreDnsAddonArn:
+    Description: ARN of the managed CoreDNS addon
+    Value: !GetAtt CoreDnsAddon.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-coredns-addon-arn"
+
+  VpcCniAddonArn:
+    Description: ARN of the managed VPC-CNI addon
+    Value: !GetAtt VpcCniAddon.Arn
+
+  KubeProxyAddonArn:
+    Description: ARN of the managed kube-proxy addon
+    Value: !GetAtt KubeProxyAddon.Arn

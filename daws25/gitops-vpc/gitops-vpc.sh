@@ -30,9 +30,29 @@ PUBLIC_SUBNET=$(aws cloudformation describe-stacks \
     --query "Stacks[0].Outputs[?OutputKey=='PublicSubnetId'].OutputValue" \
     --output text)
 
-PRIVATE_SUBNET=$(aws cloudformation describe-stacks \
+PRIVATE_SUBNET_1=$(aws cloudformation describe-stacks \
     --stack-name "$STACK_NAME" \
-    --query "Stacks[0].Outputs[?OutputKey=='PrivateSubnetId'].OutputValue" \
+    --query "Stacks[0].Outputs[?OutputKey=='PrivateSubnet1Id'].OutputValue" \
+    --output text)
+
+PRIVATE_SUBNET_2=$(aws cloudformation describe-stacks \
+    --stack-name "$STACK_NAME" \
+    --query "Stacks[0].Outputs[?OutputKey=='PrivateSubnet2Id'].OutputValue" \
+    --output text)
+
+PRIVATE_SUBNET_3=$(aws cloudformation describe-stacks \
+    --stack-name "$STACK_NAME" \
+    --query "Stacks[0].Outputs[?OutputKey=='PrivateSubnet3Id'].OutputValue" \
+    --output text)
+
+PRIVATE_SUBNETS=$(aws cloudformation describe-stacks \
+    --stack-name "$STACK_NAME" \
+    --query "Stacks[0].Outputs[?OutputKey=='PrivateSubnetIds'].OutputValue" \
+    --output text)
+
+NAT_GW=$(aws cloudformation describe-stacks \
+    --stack-name "$STACK_NAME" \
+    --query "Stacks[0].Outputs[?OutputKey=='NatGatewayId'].OutputValue" \
     --output text)
 
 NAT_EIP=$(aws cloudformation describe-stacks \
@@ -40,10 +60,20 @@ NAT_EIP=$(aws cloudformation describe-stacks \
     --query "Stacks[0].Outputs[?OutputKey=='NatEipAddress'].OutputValue" \
     --output text)
 
+IGW=$(aws cloudformation describe-stacks \
+    --stack-name "$STACK_NAME" \
+    --query "Stacks[0].Outputs[?OutputKey=='InternetGatewayId'].OutputValue" \
+    --output text)
+
 echo ""
 echo "VPC:            $VPC_ID"
+echo "Internet GW:    $IGW"
 echo "Public Subnet:  $PUBLIC_SUBNET"
-echo "Private Subnet: $PRIVATE_SUBNET"
+echo "Private Subnet1:$PRIVATE_SUBNET_1"
+echo "Private Subnet2:$PRIVATE_SUBNET_2"
+echo "Private Subnet3:$PRIVATE_SUBNET_3"
+echo "Private Subnets:$PRIVATE_SUBNETS"
+echo "NAT Gateway:    $NAT_GW"
 echo "NAT EIP:        $NAT_EIP"
 
 ##

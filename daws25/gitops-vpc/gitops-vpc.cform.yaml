@@ -1,6 +1,6 @@
 # aws cloudformation deploy --stack-name gitops-vpc --template-file daws25/gitops-vpc/gitops-vpc.cform.yaml
 AWSTemplateFormatVersion: 2010-09-09
-Description: VPC with 1 public subnet, 1 NAT gateway, and 1 private subnet for GitOps build tasks
+Description: VPC with 1 public subnet, 1 NAT gateway, and 3 private subnets for GitOps build tasks
 
 Parameters:
   VpcName:
@@ -18,10 +18,20 @@ Parameters:
     Default: 10.20.0.0/24
     Description: CIDR for the public subnet
 
-  PrivateSubnetCidr:
+  PrivateSubnet1Cidr:
     Type: String
     Default: 10.20.1.0/24
-    Description: CIDR for the private subnet
+    Description: CIDR for private subnet 1
+
+  PrivateSubnet2Cidr:
+    Type: String
+    Default: 10.20.2.0/24
+    Description: CIDR for private subnet 2
+
+  PrivateSubnet3Cidr:
+    Type: String
+    Default: 10.20.3.0/24
+    Description: CIDR for private subnet 3
 
 Resources:
   VPC:
@@ -114,7 +124,7 @@ Resources:
         - Key: ManagedBy
           Value: CloudFormation
 
-  # --- Private subnet + routing ---
+  # --- Private subnets + routing ---
 
   PrivateRouteTable:
     Type: AWS::EC2::RouteTable
@@ -137,12 +147,38 @@ Resources:
     Type: AWS::EC2::Subnet
     Properties:
       VpcId: !Ref VPC
-      CidrBlock: !Ref PrivateSubnetCidr
+      CidrBlock: !Ref PrivateSubnet1Cidr
       AvailabilityZone: !Select [0, !GetAZs ""]
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub "${VpcName}-private"
+          Value: !Sub "${VpcName}-private-1"
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnet2Cidr
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub "${VpcName}-private-2"
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  PrivateSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: !Ref PrivateSubnet3Cidr
+      AvailabilityZone: !Select [2, !GetAZs ""]
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub "${VpcName}-private-3"
         - Key: ManagedBy
           Value: CloudFormation
 
@@ -152,6 +188,18 @@ Resources:
       SubnetId: !Ref PrivateSubnet
       RouteTableId: !Ref PrivateRouteTable
 
+  AssocPrivateSubnet2:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet2
+      RouteTableId: !Ref PrivateRouteTable
+
+  AssocPrivateSubnet3:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet3
+      RouteTableId: !Ref PrivateRouteTable
+
 Outputs:
   VpcId:
     Description: VPC ID
@@ -159,15 +207,37 @@ Outputs:
     Export:
       Name: !Sub "${VpcName}-id"
 
+  PublicSubnetId:
+    Description: Public subnet ID
+    Value: !Ref PublicSubnet
+    Export:
+      Name: !Sub "${VpcName}-public-id"
+
   PrivateSubnetId:
-    Description: Private subnet ID
+    Description: Private subnet 1 ID (legacy compatibility)
     Value: !Ref PrivateSubnet
     Export:
       Name: !Sub "${VpcName}-private-id"
 
+  PrivateSubnet1Id:
+    Description: Private subnet 1 ID
+    Value: !Ref PrivateSubnet
+
+  PrivateSubnet2Id:
+    Description: Private subnet 2 ID
+    Value: !Ref PrivateSubnet2
+
+  PrivateSubnet3Id:
+    Description: Private subnet 3 ID
+    Value: !Ref PrivateSubnet3
+
   PrivateSubnetIds:
     Description: Comma-separated list of private subnet IDs
-    Value: !Ref PrivateSubnet
+    Value: !Join
+      - ","
+      - - !Ref PrivateSubnet
+        - !Ref PrivateSubnet2
+        - !Ref PrivateSubnet3
     Export:
       Name: !Sub "${VpcName}-private-subnet-ids"
 
