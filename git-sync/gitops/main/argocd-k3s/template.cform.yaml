@@ -106,8 +106,8 @@ Resources:
           wget https://github.com/${GitHubUser}/${GitHubRepo}/archive/refs/heads/main.zip -O ${GitHubRepo}-main.zip
           unzip ${GitHubRepo}-main.zip
           cd ${GitHubRepo}-main
-          echo "Executing user data script from ${USER_DATA_PATH}" | tee -a /home/ec2-user/user-data.log
-          source ${USER_DATA_PATH}
+          echo "Executing user data script from $USER_DATA_PATH" | tee -a /home/ec2-user/user-data.log
+          source $USER_DATA_PATH
           echo "User data script executed successfully" | tee -a /home/ec2-user/user-data.log
 
 Outputs:
