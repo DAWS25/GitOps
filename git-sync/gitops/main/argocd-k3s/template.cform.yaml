@@ -22,7 +22,7 @@ Parameters:
 
   AmiSsmParameter:
     Type: String
-    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-arm64-gp2
+    Default: al2023-ami-kernel-default-arm64
     Description: SSM parameter name resolving to the desired AMI ID
 
   KeyName:
