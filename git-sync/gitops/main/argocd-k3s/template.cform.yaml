@@ -113,7 +113,7 @@ Resources:
 Outputs:
   InstancePublicIP:
     Description: Public IP of the EC2 instance
-    Value: !GetAtt ArgoCDK3sInstance.PublicIp
+    Value: !GetAtt ArgoCDK3sInstance20260322.PublicIp
   WebURL:
     Description: URL to access the web server
-    Value: !Sub "http://${ArgoCDK3sInstance.PublicDnsName}/"
+    Value: !Sub "http://${ArgoCDK3sInstance20260322.PublicDnsName}/"
