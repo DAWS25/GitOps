@@ -1,6 +1,3 @@
-[submodule "daws"]
-	path = daws
-	url = git@github.com:DAWS25/daws.git
 [submodule "modules/Presence"]
 	path = modules/Presence
 	url = git@github.com:DAWS25/Presence.git
@@ -16,3 +13,6 @@
 [submodule "modules/OTO"]
 	path = modules/OTO
 	url = git@github.com:DAWS25/OTO.git
+[submodule "modules/daws"]
+	path = modules/daws
+	url = git@github.com:DAWS25/daws.git
