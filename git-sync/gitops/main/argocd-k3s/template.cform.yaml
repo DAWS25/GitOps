@@ -76,7 +76,7 @@ Resources:
           ToPort: 22
           CidrIp: 0.0.0.0/0
 
-  SimplePythonServer:
+  ArgoCDK3sInstance:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: !Ref InstanceType
@@ -87,7 +87,7 @@ Resources:
       Monitoring: !Ref DetailedMonitoring
       Tags:
         - Key: Name
-          Value: SimplePythonServer
+          Value: ArgoCDK3sInstance
       BlockDeviceMappings:
       - DeviceName: /dev/xvda
         Ebs:
@@ -111,7 +111,7 @@ Resources:
 Outputs:
   InstancePublicIP:
     Description: Public IP of the EC2 instance
-    Value: !GetAtt SimplePythonServer.PublicIp
+    Value: !GetAtt ArgoCDK3sInstance.PublicIp
   WebURL:
     Description: URL to access the web server
-    Value: !Sub "http://${SimplePythonServer.PublicDnsName}/"
+    Value: !Sub "http://${ArgoCDK3sInstance.PublicDnsName}/"
