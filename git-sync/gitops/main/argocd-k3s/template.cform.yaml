@@ -76,7 +76,7 @@ Resources:
           ToPort: 22
           CidrIp: 0.0.0.0/0
 
-  ArgoCDK3sInstance:
+  ArgoCDK3sInstance20260322:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: !Ref InstanceType
