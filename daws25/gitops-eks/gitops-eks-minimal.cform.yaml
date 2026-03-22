@@ -1,0 +1,101 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Minimal EKS cluster for GitOps with Fargate
+
+Parameters:
+  ClusterName:
+    Type: String
+    Default: gitops-eks
+
+  ClusterVersion:
+    Type: String
+    Default: "1.30"
+
+  VpcExportPrefix:
+    Type: String
+    Default: gitops-vpc
+
+Resources:
+  EksClusterRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: gitops-eks-cluster-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: eks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+
+  EksClusterSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for GitOps EKS cluster
+      VpcId: !ImportValue
+        Fn::Sub: "${VpcExportPrefix}-id"
+
+  EksCluster:
+    Type: AWS::EKS::Cluster
+    Properties:
+      Name: !Ref ClusterName
+      Version: !Ref ClusterVersion
+      RoleArn: !GetAtt EksClusterRole.Arn
+      ResourcesVpcConfig:
+        SecurityGroupIds:
+          - !Ref EksClusterSecurityGroup
+        SubnetIds: !Split
+          - ","
+          - !ImportValue
+            Fn::Sub: "${VpcExportPrefix}-private-subnet-ids"
+        EndpointPublicAccess: true
+        EndpointPrivateAccess: true
+
+  FargatePodExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: gitops-eks-fargate-pod-execution-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: eks-fargate-pods.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonEKSFargatePodExecutionRolePolicy
+
+  DefaultFargateProfile:
+    Type: AWS::EKS::FargateProfile
+    DependsOn: EksCluster
+    Properties:
+      ClusterName: !Ref EksCluster
+      FargateProfileName: default
+      PodExecutionRoleArn: !GetAtt FargatePodExecutionRole.Arn
+      Subnets: !Split
+        - ","
+        - !ImportValue
+          Fn::Sub: "${VpcExportPrefix}-private-subnet-ids"
+      Selectors:
+        - Namespace: default
+        - Namespace: kube-system
+
+Outputs:
+  EksClusterName:
+    Description: EKS cluster name
+    Value: !Ref EksCluster
+    Export:
+      Name: !Sub "${ClusterName}-cluster-name"
+
+  EksClusterArn:
+    Description: EKS cluster ARN
+    Value: !GetAtt EksCluster.Arn
+    Export:
+      Name: !Sub "${ClusterName}-cluster-arn"
+
+  EksClusterEndpoint:
+    Description: EKS cluster endpoint
+    Value: !GetAtt EksCluster.Endpoint
+    Export:
+      Name: !Sub "${ClusterName}-endpoint"
