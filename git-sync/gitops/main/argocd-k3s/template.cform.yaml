@@ -76,7 +76,7 @@ Resources:
           ToPort: 22
           CidrIp: 0.0.0.0/0
 
-  ArgoCDK3sInstance20260322:
+  ArgoCDK3sInstance20260322A:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: !Ref InstanceType
@@ -87,7 +87,7 @@ Resources:
       Monitoring: !Ref DetailedMonitoring
       Tags:
         - Key: Name
-          Value: ArgoCDK3sInstance
+          Value: ArgoCDK3sInstance20260322A
       BlockDeviceMappings:
       - DeviceName: /dev/xvda
         Ebs:
@@ -113,7 +113,7 @@ Resources:
 Outputs:
   InstancePublicIP:
     Description: Public IP of the EC2 instance
-    Value: !GetAtt ArgoCDK3sInstance20260322.PublicIp
+    Value: !GetAtt ArgoCDK3sInstance20260322A.PublicIp
   WebURL:
     Description: URL to access the web server
-    Value: !Sub "http://${ArgoCDK3sInstance20260322.PublicDnsName}/"
+    Value: !Sub "http://${ArgoCDK3sInstance20260322A.PublicDnsName}/"
