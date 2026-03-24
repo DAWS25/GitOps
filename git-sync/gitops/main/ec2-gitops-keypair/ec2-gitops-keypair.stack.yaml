@@ -1,0 +1,9 @@
+template-file-path: git-sync/GitOps/Main/ec2-gitops-keypair/ec2-gitops-keypair.cform.yaml
+
+parameters: 
+    TenantId: GitOps
+    EnvId: Main
+
+tags:
+  TenantId: GitOps
+  EnvId: Main
