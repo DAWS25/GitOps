@@ -38,6 +38,11 @@ Parameters:
     Type: String
     Default: ""
 
+  InstanceName:
+    Type: String
+    Default: k3s
+    Description: Name tag value for the EC2 instance
+
   GitHubUser:
     Description: GitHub username owning the repo
     Type: String
@@ -85,18 +90,66 @@ Resources:
           ToPort: 22
           CidrIp: 0.0.0.0/0
 
+  K3sInstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+      Policies:
+        - PolicyName: S3ArtifactsAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: s3:*
+                Resource:
+                  - !Sub
+                    - arn:aws:s3:::${ArtifactsBucket}
+                    - ArtifactsBucket: !ImportValue
+                        Fn::Sub: ${TenantId}-${EnvId}-GitopsArtifactsBucketName
+                  - !Sub
+                    - arn:aws:s3:::${ArtifactsBucket}/*
+                    - ArtifactsBucket: !ImportValue
+                        Fn::Sub: ${TenantId}-${EnvId}-GitopsArtifactsBucketName
+      Tags:
+        - Key: Name
+          Value: !Sub ${TenantId}-${EnvId}-k3s-instance-role
+        - Key: TenantId
+          Value: !Sub ${TenantId}
+        - Key: EnvId
+          Value: !Sub ${EnvId}
+
+  K3sInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref K3sInstanceRole
+
   K3sInstance:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: !Ref InstanceType
       KeyName: !If [HasKeyName, !Ref KeyName, !Ref "AWS::NoValue"]
       ImageId: !Sub "{{resolve:ssm:${AmiSsmParameter}}}"
+      IamInstanceProfile: !Ref K3sInstanceProfile
       SecurityGroupIds:
         - !Ref InstanceSecurityGroup
       Monitoring: !Ref DetailedMonitoring
       Tags:
         - Key: Name
-          Value: K3sInstance
+          Value: !Ref InstanceName
+        - Key: TenantId
+          Value: !Sub ${TenantId}
+        - Key: EnvId
+          Value: !Sub ${EnvId}
         - Key: ARTIFACTS_BUCKET
           Value: !ImportValue
             Fn::Sub: ${TenantId}-${EnvId}-GitopsArtifactsBucketName

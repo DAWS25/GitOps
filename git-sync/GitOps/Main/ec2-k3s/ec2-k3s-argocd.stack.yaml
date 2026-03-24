@@ -3,6 +3,7 @@ template-file-path: git-sync/GitOps/Main/ec2-k3s/ec2-k3s.cform.yaml
 parameters: 
     TenantId: GitOps
     EnvId: Main
+    InstanceName: GitOps-Main-k3s-argocd
 
 tags:
   TenantId: GitOps
