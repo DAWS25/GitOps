@@ -1,6 +1,4 @@
-# aws cloudformation deploy --stack-name vpc-3rnat-01-private --template-file cloudformation/vpc-3rnat/vpc-3rnat-01-private.cform.yaml
-# aws cloudformation delete-stack --stack-name vpc-3rnat-01-private
-Description: Private subnets (NAT-routable) for the vpc-3rnat VPC.
+Description: VPC networking for High-Availability (3 AZs) - Private Subnets
 
 Parameters:
   TenantId:

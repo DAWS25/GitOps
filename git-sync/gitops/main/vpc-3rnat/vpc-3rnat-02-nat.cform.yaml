@@ -1,6 +1,4 @@
-# aws cloudformation deploy --stack-name vpc-3rnat-02-nat --template-file cloudformation/vpc-3rnat/vpc-3rnat-02-nat.cform.yaml
-# aws cloudformation delete-stack --stack-name vpc-3rnat-02-nat
-Description: Single regional NAT Gateway and private route table for the vpc-3rnat VPC.
+Description: VPC networking for High-Availability (3 AZs) - NAT Gateway ($) and Routing
 
 Parameters:
   TenantId:
