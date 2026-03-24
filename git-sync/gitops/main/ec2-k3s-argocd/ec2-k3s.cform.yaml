@@ -13,7 +13,7 @@
 # time curl "http://${PUBLIC_IP}/tuna-1.png" -o /dev/null
 # time ab -k -r -n 1024 -c 16 "http://${PUBLIC_IP}/tuna-1.png"
 
-Description: EC2 instance running ArgoCD on k3s
+Description: EC2 instance running k3s
 
 Parameters:
   TenantId:
@@ -61,10 +61,11 @@ Parameters:
   VolumeType:
     Type: String
     Default: gp3
+
+  K3sPort:
+    Type: Number
+    Default: 6443
   
-  ArgoCDPort:
-    Type: String
-    Default: 12746
 
 Conditions:
   HasKeyName: !Not [!Equals [!Ref KeyName, ""]]
@@ -76,15 +77,15 @@ Resources:
       GroupDescription: Enable HTTP and SSH access
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: !Ref ArgoCDPort
-          ToPort: !Ref ArgoCDPort
+          FromPort: !Ref K3sPort
+          ToPort: !Ref K3sPort
           CidrIp: 0.0.0.0/0
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
           CidrIp: 0.0.0.0/0
 
-  ArgoCDK3sInstance20260322:
+  K3sInstance:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: !Ref InstanceType
@@ -95,7 +96,10 @@ Resources:
       Monitoring: !Ref DetailedMonitoring
       Tags:
         - Key: Name
-          Value: ArgoCDK3sInstance
+          Value: K3sInstance
+        - Key: ARTIFACTS_BUCKET
+          Value: !ImportValue
+            Fn::Sub: ${TenantId}-${EnvId}-GitopsArtifactsBucketName
       BlockDeviceMappings:
       - DeviceName: /dev/xvda
         Ebs:
@@ -121,7 +125,7 @@ Resources:
 Outputs:
   InstancePublicIP:
     Description: Public IP of the EC2 instance
-    Value: !GetAtt ArgoCDK3sInstance20260322.PublicIp
+    Value: !GetAtt K3sInstance.PublicIp
   WebURL:
     Description: URL to access the web server
-    Value: !Sub "http://${ArgoCDK3sInstance20260322.PublicDnsName}/"
+    Value: !Sub "http://${K3sInstance.PublicDnsName}/"

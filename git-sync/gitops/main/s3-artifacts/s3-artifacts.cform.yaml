@@ -28,3 +28,5 @@ Outputs:
   GitopsArtifactsBucketName:
     Description: Name of the S3 bucket for GitOps artifacts
     Value: !Ref GitopsArtifactsBucket
+    Export:
+      Name: !Sub ${TenantId}-${EnvId}-GitopsArtifactsBucketName
