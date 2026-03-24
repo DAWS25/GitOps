@@ -1,0 +1,45 @@
+Description: EC2 key pair for GitOps
+
+Parameters:
+  TenantId:
+    Type: String
+    Default: Main
+  
+  EnvId:
+    Type: String
+    Default: Main
+
+Resources:
+  GitOpsKeyPair:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: !Sub ${TenantId}-${EnvId}-gitops-keypair
+      Tags:
+        - Key: Name
+          Value: !Sub ${TenantId}-${EnvId}-gitops-keypair
+        - Key: TenantId
+          Value: !Sub ${TenantId}
+        - Key: EnvId
+          Value: !Sub ${EnvId}
+
+Outputs:
+  GitOpsKeyPairName:
+    Description: Name of the EC2 Key Pair for GitOps
+    Value: !Ref GitOpsKeyPair
+    Export:
+      Name: !Sub ${TenantId}-${EnvId}-GitOpsKeyPairName
+
+  GitOpsKeyPairId:
+    Description: Key pair ID used by EC2 and SSM key material parameter path
+    Value: !GetAtt GitOpsKeyPair.KeyPairId
+    Export:
+      Name: !Sub ${TenantId}-${EnvId}-GitOpsKeyPairId
+
+  GitOpsKeyPairPrivateKeySsmParameterName:
+    Description: SSM parameter path containing private key material (SecureString)
+    Value: !Sub /ec2/keypair/${GitOpsKeyPair.KeyPairId}
+    Export:
+      Name: !Sub ${TenantId}-${EnvId}-GitOpsKeyPairPrivateKeySsmParameterName
+
+
+
