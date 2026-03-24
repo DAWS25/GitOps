@@ -3,3 +3,7 @@ template-file-path: git-sync/gitops/main/vpc-3rnat/vpc-3rnat-01-private.template
 parameters: 
     TenantId: GitOps
     EnvId: Main
+
+tags:
+  TenantId: GitOps
+  EnvId: Main

@@ -16,6 +16,14 @@
 Description: EC2 instance running ArgoCD on k3s
 
 Parameters:
+  TenantId:
+    Type: String
+    Default: Main
+  
+  EnvId:
+    Type: String
+    Default: Main
+
   InstanceType:
     Type: String
     Default: t4g.small
@@ -96,9 +104,9 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          USER_DATA_PATH="user-data/argocd-k3s/user-data.sh"
+          USER_DATA_PATH="user-data/k3s/user-data.sh"
           ##
-          echo "User data script started" | tee -a /home/ec2-user/user-data.log
+          echo "User data script started for [$USER_DATA_PATH]" | tee -a /home/ec2-user/user-data.log
           yum update -y
           yum install -y unzip python3 wget
           cd /home/ec2-user
@@ -107,7 +115,7 @@ Resources:
           unzip ${GitHubRepo}-main.zip
           cd ${GitHubRepo}-main
           echo "Executing user data script from $USER_DATA_PATH" | tee -a /home/ec2-user/user-data.log
-          source $USER_DATA_PATH
+          source $USER_DATA_PATH | tee -a /home/ec2-user/user-data.log
           echo "User data script executed successfully" | tee -a /home/ec2-user/user-data.log
 
 Outputs:

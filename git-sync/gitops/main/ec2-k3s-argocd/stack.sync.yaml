@@ -1,8 +1,0 @@
-template-file-path: git-sync/gitops/main/argocd-k3s/template.cform.yaml
-
-parameters:
-  KeyName: gitops-keypair
-
-tags:
-  tenant-id: gitops
-  env-id: main

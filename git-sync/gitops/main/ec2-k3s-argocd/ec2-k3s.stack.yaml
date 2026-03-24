@@ -1,4 +1,4 @@
-template-file-path: git-sync/gitops/main/vpc-3rnat/vpc-3rnat-00-vpc.cform.yaml
+template-file-path: git-sync/gitops/main/ec2-k3s-argocd/ec2-k3s-argocd.cform.yaml
 
 parameters: 
     TenantId: GitOps
