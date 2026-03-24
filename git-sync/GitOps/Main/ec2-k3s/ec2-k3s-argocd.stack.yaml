@@ -7,3 +7,4 @@ parameters:
 tags:
   TenantId: GitOps
   EnvId: Main
+  KeyName: GitOps-Main-gitops-keypair
