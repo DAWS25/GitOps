@@ -1,0 +1,30 @@
+Description: S3 bucket for GitOps artifacts (k3s logs, kubeconfigs, etc.)
+
+Parameters:
+  TenantId:
+    Type: String
+    Default: Main
+  
+  EnvId:
+    Type: String
+    Default: Main
+
+Resources:
+  GitopsArtifactsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub ${TenantId}-${EnvId}-gitops-artifacts
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: TenantId
+          Value: !Sub ${TenantId}
+        - Key: EnvId
+          Value: !Sub ${EnvId}
+Outputs:
+  GitopsArtifactsBucketName:
+    Description: Name of the S3 bucket for GitOps artifacts
+    Value: !Ref GitopsArtifactsBucket

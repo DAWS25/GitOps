@@ -1,4 +1,4 @@
-template-file-path: git-sync/GitOps/Main/ec2-k3s-argocd/ec2-k3s-argocd.cform.yaml
+template-file-path: git-sync/GitOps/Main/s3-artifacts/s3-artifacts.cform.yaml
 
 parameters: 
     TenantId: GitOps
