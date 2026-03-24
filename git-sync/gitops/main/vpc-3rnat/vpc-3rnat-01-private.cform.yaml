@@ -37,6 +37,10 @@ Resources:
           Value: !Sub ${TenantId}-${EnvId}-private-a
         - Key: Tier
           Value: private
+        - Key: TenantId
+          Value: !Sub ${TenantId}
+        - Key: EnvId
+          Value: !Sub ${EnvId}
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
@@ -51,6 +55,10 @@ Resources:
           Value: !Sub ${TenantId}-${EnvId}-private-b
         - Key: Tier
           Value: private
+        - Key: TenantId
+          Value: !Sub ${TenantId}
+        - Key: EnvId
+          Value: !Sub ${EnvId}
 
   PrivateSubnet3:
     Type: AWS::EC2::Subnet
@@ -65,6 +73,10 @@ Resources:
           Value: !Sub ${TenantId}-${EnvId}-private-c
         - Key: Tier
           Value: private
+        - Key: TenantId
+          Value: !Sub ${TenantId}
+        - Key: EnvId
+          Value: !Sub ${EnvId}
 
 Outputs:
   PrivateSubnetIds:

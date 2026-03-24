@@ -21,6 +21,10 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${TenantId}-${EnvId}-nat-eip
+        - Key: TenantId
+          Value: !Sub ${TenantId}
+        - Key: EnvId
+          Value: !Sub ${EnvId}
 
   NatGateway:
     Type: AWS::EC2::NatGateway
@@ -31,6 +35,10 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${TenantId}-${EnvId}-nat
+        - Key: TenantId
+          Value: !Sub ${TenantId}
+        - Key: EnvId
+          Value: !Sub ${EnvId}
 
   PrivateRouteTable:
     Type: AWS::EC2::RouteTable
@@ -40,6 +48,10 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${TenantId}-${EnvId}-private-rt
+        - Key: TenantId
+          Value: !Sub ${TenantId}
+        - Key: EnvId
+          Value: !Sub ${EnvId}
 
   PrivateDefaultRoute:
     Type: AWS::EC2::Route
