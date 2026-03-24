@@ -1,0 +1,5 @@
+template-file-path: git-sync/gitops/main/vpc-3rnat/vpc-3rnat-02-nat.template.yaml
+
+parameters: 
+    TenantId: GitOps
+    EnvId: Main
