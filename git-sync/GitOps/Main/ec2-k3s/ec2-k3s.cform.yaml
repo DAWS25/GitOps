@@ -178,23 +178,20 @@ Resources:
           USER_DATA_LOG="/home/ec2-user/user-data.log"
           USER_DATA_PATH="${UserDataPath}"
           GIT_REPO="${GitHubRepo}"
-          REPO_NAME="${GIT_REPO##*/}"
+          REPO_NAME=$(echo "$GIT_REPO" | awk -F/ '{print $NF}')
           GIT_BRANCH="${GitHubBranch}"
-
           if [ -z "$USER_DATA_PATH" ] || [ -z "$GIT_REPO" ] || [ -z "$GIT_BRANCH" ]; then
             echo "VALIDATION ERROR: UserDataPath, GitHubRepo, and GitHubBranch must be defined and non-empty" | tee -a "$USER_DATA_LOG"
             exit 1
           fi
-
-
           echo "User data script started for [$USER_DATA_PATH]" | tee -a "$USER_DATA_LOG"
           yum update -y
           yum install -y unzip curl
           cd /home/ec2-user
-          echo "Downloading repository from GitHub: ${GIT_REPO} branch ${GIT_BRANCH}" | tee -a "$USER_DATA_LOG"
-          curl -fsSL https://github.com/${GIT_REPO}/archive/refs/heads/${GIT_BRANCH}.zip -o repo.zip
+          echo "Downloading repository from GitHub: $GIT_REPO branch $GIT_BRANCH" | tee -a "$USER_DATA_LOG"
+          curl -fsSL https://github.com/$GIT_REPO/archive/refs/heads/$GIT_BRANCH.zip -o repo.zip
           unzip repo.zip
-          cd ${REPO_NAME}-${GIT_BRANCH}
+          cd $REPO_NAME-$GIT_BRANCH
           echo "Executing user data script from $USER_DATA_PATH" | tee -a "$USER_DATA_LOG"
           source "$USER_DATA_PATH" | tee -a "$USER_DATA_LOG"
           echo "User data script execution completed" | tee -a "$USER_DATA_LOG"
@@ -208,3 +205,6 @@ Outputs:
   WebURL:
     Description: URL to access the web server
     Value: !Sub "http://${K3sInstance.PublicDnsName}/"
+  Ec2InstanceConnectURL:
+    Description: EC2 Instance Connect URL for browser-based SSH
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh/home?region=${AWS::Region}&connType=standard&instanceId=${K3sInstance}&osUser=ec2-user&sshPort=22&addressFamily=ipv4"
