@@ -13,7 +13,7 @@
 # time curl "http://${PUBLIC_IP}/tuna-1.png" -o /dev/null
 # time ab -k -r -n 1024 -c 16 "http://${PUBLIC_IP}/tuna-1.png"
 
-Description: EC2 instance running k3s
+Description: EC2 instance running k3s [1517]
 
 Parameters:
   TenantId:
