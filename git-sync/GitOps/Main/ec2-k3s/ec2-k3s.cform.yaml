@@ -43,15 +43,20 @@ Parameters:
     Default: k3s
     Description: Name tag value for the EC2 instance
 
-  GitHubUser:
-    Description: GitHub username owning the repo
-    Type: String
-    Default: "DAWS25"
-
   GitHubRepo:
-    Description: GitHub repository name
+    Description: GitHub repository in owner/name format
     Type: String
-    Default: "daws"
+    Default: "DAWS25/daws"
+
+  GitHubBranch:
+    Description: GitHub branch to download
+    Type: String
+    Default: "main"
+  
+  UserDataPath:
+    Description: Path to user data script within the GitHub repository
+    Type: String
+    Default: "user-data/k3s/user-data.sh"
 
   DetailedMonitoring:
     Type: String
@@ -119,6 +124,14 @@ Resources:
                     - arn:aws:s3:::${ArtifactsBucket}/*
                     - ArtifactsBucket: !ImportValue
                         Fn::Sub: ${TenantId}-${EnvId}-GitopsArtifactsBucketName
+        - PolicyName: Ec2DescribeTagsAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ec2:DescribeTags
+                Resource: "*"
       Tags:
         - Key: Name
           Value: !Sub ${TenantId}-${EnvId}-k3s-instance-role
@@ -161,21 +174,33 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          USER_DATA_PATH="user-data/k3s/user-data.sh"
-          ##
-          echo "User data script started for [$USER_DATA_PATH]" | tee -a /home/ec2-user/user-data.log
-          yum update -y
-          yum install -y unzip 
-          cd /home/ec2-user
-          echo "Downloading repository from GitHub: ${GitHubUser}/${GitHubRepo}" | tee -a /home/ec2-user/user-data.log
-          curl -fsSL https://github.com/${GitHubUser}/${GitHubRepo}/archive/refs/heads/main.zip -o ${GitHubRepo}-main.zip
-          unzip ${GitHubRepo}-main.zip
-          rm -f ${GitHubRepo}-main.zip
-          cd ${GitHubRepo}-main
-          echo "Executing user data script from $USER_DATA_PATH" | tee -a /home/ec2-user/user-data.log
-          source $USER_DATA_PATH | tee -a /home/ec2-user/user-data.log
-          echo "User data script executed successfully" | tee -a /home/ec2-user/user-data.log
+          set -e
+          USER_DATA_LOG="/home/ec2-user/user-data.log"
+          USER_DATA_PATH="${UserDataPath}"
+          GIT_REPO="${GitHubRepo}"
+          REPO_NAME="${GIT_REPO##*/}"
+          GIT_BRANCH="${GitHubBranch}"
 
+          if [ -z "$USER_DATA_PATH" ] || [ -z "$GIT_REPO" ] || [ -z "$GIT_BRANCH" ]; then
+            echo "VALIDATION ERROR: UserDataPath, GitHubRepo, and GitHubBranch must be defined and non-empty" | tee -a "$USER_DATA_LOG"
+            exit 1
+          fi
+
+
+          echo "User data script started for [$USER_DATA_PATH]" | tee -a "$USER_DATA_LOG"
+          yum update -y
+          yum install -y unzip curl
+          cd /home/ec2-user
+          echo "Downloading repository from GitHub: ${GIT_REPO} branch ${GIT_BRANCH}" | tee -a "$USER_DATA_LOG"
+          curl -fsSL https://github.com/${GIT_REPO}/archive/refs/heads/${GIT_BRANCH}.zip -o repo.zip
+          unzip repo.zip
+          cd ${REPO_NAME}-${GIT_BRANCH}
+          echo "Executing user data script from $USER_DATA_PATH" | tee -a "$USER_DATA_LOG"
+          source "$USER_DATA_PATH" | tee -a "$USER_DATA_LOG"
+          echo "User data script execution completed" | tee -a "$USER_DATA_LOG"
+          rm -f repo.zip
+          echo "User data script executed successfully" | tee -a "$USER_DATA_LOG"
+          
 Outputs:
   InstancePublicIP:
     Description: Public IP of the EC2 instance
