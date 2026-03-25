@@ -165,11 +165,12 @@ Resources:
           ##
           echo "User data script started for [$USER_DATA_PATH]" | tee -a /home/ec2-user/user-data.log
           yum update -y
-          yum install -y unzip python3 wget
+          yum install -y unzip 
           cd /home/ec2-user
           echo "Downloading repository from GitHub: ${GitHubUser}/${GitHubRepo}" | tee -a /home/ec2-user/user-data.log
-          wget https://github.com/${GitHubUser}/${GitHubRepo}/archive/refs/heads/main.zip -O ${GitHubRepo}-main.zip
+          curl -fsSL https://github.com/${GitHubUser}/${GitHubRepo}/archive/refs/heads/main.zip -o ${GitHubRepo}-main.zip
           unzip ${GitHubRepo}-main.zip
+          rm -f ${GitHubRepo}-main.zip
           cd ${GitHubRepo}-main
           echo "Executing user data script from $USER_DATA_PATH" | tee -a /home/ec2-user/user-data.log
           source $USER_DATA_PATH | tee -a /home/ec2-user/user-data.log
