@@ -11,7 +11,7 @@ TENANT_ID="GitOps"
 ENV_ID="Main"
 SERVICE_ID="S3Artifacts"
 STACK_NAME="${TENANT_ID}-${ENV_ID}-s3-artifacts"
-BUCKET_NAME="${1:-}"
+BUCKET_NAME="gitops-main-artifacts-20250326"
 
 if [ ! -f "$TEMPLATE_FILE" ]; then
 	echo "Error: Template file not found at $TEMPLATE_FILE"
@@ -31,7 +31,7 @@ aws cloudformation deploy \
 	--template-file "$TEMPLATE_FILE" \
 	--stack-name "$STACK_NAME" \
 	--parameter-overrides TenantId="$TENANT_ID" EnvId="$ENV_ID" BucketName="$BUCKET_NAME" \
-	--tags TenantId="$TENANT_ID" EnvId="$ENV_ID" ServiceId="$SERVICE_ID" \
+	--tags TenantId="$TENANT_ID" EnvId="$ENV_ID" \
 	--no-fail-on-empty-changeset
 
 echo "Stack deployment completed successfully"

@@ -221,7 +221,7 @@ Resources:
                     {
                       "file_path": "/home/ec2-user/user-data.log",
                       "log_group_name": "${UserDataLogGroup}",
-                      "log_stream_name": "${!aws:InstanceId}/user-data",
+                      "log_stream_name": "{instance_id}/user-data",
                       "timezone": "UTC"
                     }
                   ]
@@ -252,7 +252,7 @@ Outputs:
     Value: !Ref UserDataLogGroup
   UserDataLogStreamName:
     Description: CloudWatch Logs stream name pattern for EC2 user-data log
-    Value: !Sub "${!aws:InstanceId}/user-data"
+    Value: !Sub "${Instance}/user-data"
   InstancePublicIP:
     Description: Public IP of the EC2 instance
     Value: !GetAtt Instance.PublicIp
