@@ -21,11 +21,16 @@ fi
 
 echo "Deploying stack from: $TEMPLATE_FILE"
 
+ARTIFACTS_BUCKET_NAME="$(aws cloudformation describe-stacks \
+	--stack-name "${TENANT_ID}-${ENV_ID}-s3-artifacts" \
+	--query "Stacks[0].Outputs[?OutputKey=='ArtifactsBucketName'].OutputValue | [0]" \
+	--output text)"
+
 aws cloudformation deploy \
 	--template-file "$TEMPLATE_FILE" \
 	--stack-name "$STACK_NAME" \
 	--capabilities CAPABILITY_NAMED_IAM \
-	--parameter-overrides TenantId="$TENANT_ID" EnvId="$ENV_ID" InstanceName="$INSTANCE_NAME" KeyName="$KEY_NAME" \
+	--parameter-overrides TenantId="$TENANT_ID" EnvId="$ENV_ID" InstanceName="$INSTANCE_NAME" KeyName="$KEY_NAME" ArtifactsBucketName="$ARTIFACTS_BUCKET_NAME" \
 	--tags TenantId="$TENANT_ID" EnvId="$ENV_ID" ServiceId="$SERVICE_ID" \
 	--no-fail-on-empty-changeset
 
