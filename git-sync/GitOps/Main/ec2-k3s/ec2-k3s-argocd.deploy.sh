@@ -26,6 +26,8 @@ ARTIFACTS_BUCKET_NAME="$(aws cloudformation describe-stacks \
 	--query "Stacks[0].Outputs[?OutputKey=='ArtifactsBucketName'].OutputValue | [0]" \
 	--output text)"
 
+echo "Using artifacts bucket: $ARTIFACTS_BUCKET_NAME"
+
 aws cloudformation deploy \
 	--template-file "$TEMPLATE_FILE" \
 	--stack-name "$STACK_NAME" \

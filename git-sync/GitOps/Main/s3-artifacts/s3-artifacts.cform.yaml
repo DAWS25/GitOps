@@ -29,8 +29,8 @@ Resources:
         - Key: EnvId
           Value: !Sub ${EnvId}
 Outputs:
-  GitopsArtifactsBucketName:
+  ArtifactsBucketName:
     Description: Name of the S3 bucket for GitOps artifacts
     Value: !Ref GitopsArtifactsBucket
     Export:
-      Name: !Sub ${TenantId}-${EnvId}-GitopsArtifactsBucketName
+      Name: !Sub ${TenantId}-${EnvId}-ArtifactsBucketName

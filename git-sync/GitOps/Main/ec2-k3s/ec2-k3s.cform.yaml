@@ -130,11 +130,11 @@ Resources:
                   - !Sub
                     - arn:aws:s3:::${ArtifactsBucket}
                     - ArtifactsBucket: !ImportValue
-                        Fn::Sub: ${TenantId}-${EnvId}-GitopsArtifactsBucketName
+                        Fn::Sub: ${TenantId}-${EnvId}-ArtifactsBucketName
                   - !Sub
                     - arn:aws:s3:::${ArtifactsBucket}/*
                     - ArtifactsBucket: !ImportValue
-                        Fn::Sub: ${TenantId}-${EnvId}-GitopsArtifactsBucketName
+                        Fn::Sub: ${TenantId}-${EnvId}-ArtifactsBucketName
         - PolicyName: Ec2DescribeTagsAccess
           PolicyDocument:
             Version: "2012-10-17"
@@ -230,7 +230,9 @@ Resources:
             }
           }
           EOF
+          systemctl enable amazon-cloudwatch-agent
           /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:"$CW_CONFIG_PATH"
+          systemctl restart amazon-cloudwatch-agent
           # Userland setup
           cd /home/ec2-user
           echo "Downloading repository from GitHub: $GIT_REPO branch $GIT_BRANCH" | tee -a "$USER_DATA_LOG"
@@ -239,6 +241,7 @@ Resources:
           cd $REPO_NAME-$GIT_BRANCH
           echo "Executing user data script from $USER_DATA_PATH" | tee -a "$USER_DATA_LOG"
           sudo -u ec2-user -E bash -lc "bash '$USER_DATA_PATH'" 2>&1 | tee -a "$USER_DATA_LOG"
+          systemctl restart amazon-cloudwatch-agent
           echo "User data cleanup" | tee -a "$USER_DATA_LOG"
           rm -f repo.zip
           echo "User data script executed successfully" | tee -a "$USER_DATA_LOG"
