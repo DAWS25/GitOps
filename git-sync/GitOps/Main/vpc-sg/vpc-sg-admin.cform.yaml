@@ -1,0 +1,34 @@
+Parameters:
+  TenantId:
+    Type: String
+    Default: Main
+  
+  EnvId:
+    Type: String
+    Default: Main
+
+  AdminIngressCidr:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: CIDR block allowed to access the admin security group over SSH
+  
+
+Resources:
+
+  AdminSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref AdminIngressCidr
+
+          
+Outputs:
+  AdminSecurityGroupId:
+    Description: Security Group ID for the admin security group
+    Value: !Ref AdminSecurityGroup
+    Export:
+      Name: !Sub ${TenantId}-${EnvId}-AdminSecurityGroupId

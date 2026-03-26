@@ -75,12 +75,23 @@ Parameters:
   K3sPort:
     Type: Number
     Default: 6443
+
+  K3sIngressCidr:
+    Type: String
+    Default: 0.0.0.0/0
+    Description: CIDR block allowed to access the k3s API port
   
 
 Conditions:
   HasKeyName: !Not [!Equals [!Ref KeyName, ""]]
 
 Resources:
+  UserDataLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /ec2/${TenantId}/${EnvId}/${InstanceName}/user-data
+      RetentionInDays: 14
+
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -89,13 +100,9 @@ Resources:
         - IpProtocol: tcp
           FromPort: !Ref K3sPort
           ToPort: !Ref K3sPort
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0
+          CidrIp: !Ref K3sIngressCidr
 
-  K3sInstanceRole:
+  InstanceRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -140,21 +147,23 @@ Resources:
         - Key: EnvId
           Value: !Sub ${EnvId}
 
-  K3sInstanceProfile:
+  InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Roles:
-        - !Ref K3sInstanceRole
+        - !Ref InstanceRole
 
-  K3sInstance:
+  Instance:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: !Ref InstanceType
       KeyName: !If [HasKeyName, !Ref KeyName, !Ref "AWS::NoValue"]
       ImageId: !Sub "{{resolve:ssm:${AmiSsmParameter}}}"
-      IamInstanceProfile: !Ref K3sInstanceProfile
+      IamInstanceProfile: !Ref InstanceProfile
       SecurityGroupIds:
         - !Ref InstanceSecurityGroup
+        - Fn::ImportValue:
+            !Sub ${TenantId}-${EnvId}-AdminSecurityGroupId
       Monitoring: !Ref DetailedMonitoring
       Tags:
         - Key: Name
@@ -174,8 +183,9 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          set -e
+          set -ex
           USER_DATA_LOG="/home/ec2-user/user-data.log"
+          CW_CONFIG_PATH="/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json"
           USER_DATA_PATH="${UserDataPath}"
           GIT_REPO="${GitHubRepo}"
           REPO_NAME=$(echo "$GIT_REPO" | awk -F/ '{print $NF}')
@@ -184,9 +194,29 @@ Resources:
             echo "VALIDATION ERROR: UserDataPath, GitHubRepo, and GitHubBranch must be defined and non-empty" | tee -a "$USER_DATA_LOG"
             exit 1
           fi
-          echo "User data script started for [$USER_DATA_PATH]" | tee -a "$USER_DATA_LOG"
+          echo "User data script started for [$USER_DATA_PATH]@$[GIT_REPO:$GIT_BRANCH]" | tee -a "$USER_DATA_LOG"
           yum update -y
-          yum install -y unzip curl
+          yum install -y unzip amazon-cloudwatch-agent
+          mkdir -p "$(dirname "$CW_CONFIG_PATH")"
+          cat > "$CW_CONFIG_PATH" <<'EOF'
+          {
+            "logs": {
+              "logs_collected": {
+                "files": {
+                  "collect_list": [
+                    {
+                      "file_path": "/home/ec2-user/user-data.log",
+                      "log_group_name": "${UserDataLogGroup}",
+                      "log_stream_name": "${!aws:InstanceId}/user-data",
+                      "timezone": "UTC"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+          EOF
+          /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -s -c file:"$CW_CONFIG_PATH"
           cd /home/ec2-user
           echo "Downloading repository from GitHub: $GIT_REPO branch $GIT_BRANCH" | tee -a "$USER_DATA_LOG"
           curl -fsSL https://github.com/$GIT_REPO/archive/refs/heads/$GIT_BRANCH.zip -o repo.zip
@@ -199,12 +229,18 @@ Resources:
           echo "User data script executed successfully" | tee -a "$USER_DATA_LOG"
           
 Outputs:
+  UserDataLogGroupName:
+    Description: CloudWatch Logs group name for EC2 user-data log
+    Value: !Ref UserDataLogGroup
+  UserDataLogStreamName:
+    Description: CloudWatch Logs stream name pattern for EC2 user-data log
+    Value: !Sub "${!aws:InstanceId}/user-data"
   InstancePublicIP:
     Description: Public IP of the EC2 instance
-    Value: !GetAtt K3sInstance.PublicIp
+    Value: !GetAtt Instance.PublicIp
   WebURL:
     Description: URL to access the web server
-    Value: !Sub "http://${K3sInstance.PublicDnsName}/"
+    Value: !Sub "http://${Instance.PublicDnsName}/"
   Ec2InstanceConnectURL:
     Description: EC2 Instance Connect URL for browser-based SSH
-    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh/home?region=${AWS::Region}&connType=standard&instanceId=${K3sInstance}&osUser=ec2-user&sshPort=22&addressFamily=ipv4"
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/ec2-instance-connect/ssh/home?region=${AWS::Region}&connType=standard&instanceId=${Instance}&osUser=ec2-user&sshPort=22&addressFamily=ipv4"

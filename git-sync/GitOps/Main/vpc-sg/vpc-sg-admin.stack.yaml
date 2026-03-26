@@ -1,0 +1,9 @@
+template-file-path: git-sync/GitOps/Main/vpc-gitops-sg/vpc-gitops-sg-admin.cform.yaml
+
+parameters: 
+    TenantId: GitOps
+    EnvId: Main
+
+tags:
+  TenantId: GitOps
+  EnvId: Main
