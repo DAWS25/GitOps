@@ -118,5 +118,5 @@ fi
 
 if [ -n "$LOG_GROUP_NAME" ] && [ "$LOG_GROUP_NAME" != "None" ] && [ -n "$LOG_STREAM_NAME" ] && [ "$LOG_STREAM_NAME" != "None" ]; then
 	echo
-	"${SCRIPT_DIR}/ec2-k3s-argocd-logs.sh" "$LOG_GROUP_NAME" "$LOG_STREAM_NAME"
+	"${SCRIPT_DIR}/ec2.k3s.argocd.logs.sh" "$LOG_GROUP_NAME" "$LOG_STREAM_NAME"
 fi
