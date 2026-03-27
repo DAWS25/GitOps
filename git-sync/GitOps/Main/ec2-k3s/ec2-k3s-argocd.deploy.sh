@@ -7,12 +7,14 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEMPLATE_FILE="${SCRIPT_DIR}/ec2-k3s.cform.yaml"
-TENANT_ID="GitOps"
-ENV_ID="Main"
-SERVICE_ID="ArgoCD"
+TENANT_ID="${TENANT_ID:-GitOps}"
+ENV_ID="${ENV_ID:-Main}"
+SERVICE_ID="${SERVICE_ID:-ArgoCD}"
 KEY_NAME="${TENANT_ID}-${ENV_ID}-gitops-keypair"
 INSTANCE_NAME="${TENANT_ID}-${ENV_ID}-k3s-argocd-$RANDOM"
 STACK_NAME="${TENANT_ID}-${ENV_ID}-ec2-k3s-argocd"
+
+export AWS_PAGER=""
 
 if [ ! -f "$TEMPLATE_FILE" ]; then
 	echo "Error: Template file not found at $TEMPLATE_FILE"
