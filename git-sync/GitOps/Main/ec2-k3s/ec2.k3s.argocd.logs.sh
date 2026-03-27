@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script to fetch and print CloudWatch logs for ec2-k3s-argocd user-data
-# Usage: ./ec2-k3s-argocd-logs.sh <log-group-name> <log-stream-name>
+# Usage: ./ec2.k3s.argocd.logs.sh <log-group-name> <log-stream-name>
 
 set -e
 

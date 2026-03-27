@@ -3,7 +3,7 @@
 set -e
 
 # Script to deploy ec2-k3s-argocd stack
-# Usage: ./ec2-k3s-argocd.deploy.sh
+# Usage: ./ec2.k3s.argocd.deploy.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEMPLATE_FILE="${SCRIPT_DIR}/ec2-k3s.cform.yaml"
