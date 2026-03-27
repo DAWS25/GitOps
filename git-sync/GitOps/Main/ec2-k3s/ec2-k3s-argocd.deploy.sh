@@ -24,7 +24,12 @@ echo "Deploying stack from: $TEMPLATE_FILE"
 ARTIFACTS_BUCKET_NAME="$(aws cloudformation describe-stacks \
 	--stack-name "${TENANT_ID}-${ENV_ID}-s3-artifacts" \
 	--query "Stacks[0].Outputs[?OutputKey=='ArtifactsBucketName'].OutputValue | [0]" \
-	--output text)"
+	--output text 2>/dev/null || true)"
+
+if [ -z "$ARTIFACTS_BUCKET_NAME" ] || [ "$ARTIFACTS_BUCKET_NAME" = "None" ]; then
+	echo "Error: artifacts bucket not found. Deploy stack '${TENANT_ID}-${ENV_ID}-s3-artifacts' first."
+	exit 1
+fi
 
 echo "Using artifacts bucket: $ARTIFACTS_BUCKET_NAME"
 
@@ -117,6 +122,8 @@ else
 fi
 
 if [ -n "$LOG_GROUP_NAME" ] && [ "$LOG_GROUP_NAME" != "None" ] && [ -n "$LOG_STREAM_NAME" ] && [ "$LOG_STREAM_NAME" != "None" ]; then
-	echo
+	echo "Fetching user-data logs from CloudWatch..."
+	echo "#########################################"
 	"${SCRIPT_DIR}/ec2-k3s-argocd.logs.sh" "$LOG_GROUP_NAME" "$LOG_STREAM_NAME"
 fi
+echo "Deployment script completed"
