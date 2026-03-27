@@ -3,7 +3,7 @@
 set -e
 
 # Script to deploy ec2-k3s-argocd stack
-# Usage: ./ec2.k3s.argocd.deploy.sh
+# Usage: ./ec2-k3s-argocd.deploy.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEMPLATE_FILE="${SCRIPT_DIR}/ec2-k3s.cform.yaml"
@@ -118,5 +118,5 @@ fi
 
 if [ -n "$LOG_GROUP_NAME" ] && [ "$LOG_GROUP_NAME" != "None" ] && [ -n "$LOG_STREAM_NAME" ] && [ "$LOG_STREAM_NAME" != "None" ]; then
 	echo
-	"${SCRIPT_DIR}/ec2.k3s.argocd.logs.sh" "$LOG_GROUP_NAME" "$LOG_STREAM_NAME"
+	"${SCRIPT_DIR}/ec2-k3s-argocd.logs.sh" "$LOG_GROUP_NAME" "$LOG_STREAM_NAME"
 fi
