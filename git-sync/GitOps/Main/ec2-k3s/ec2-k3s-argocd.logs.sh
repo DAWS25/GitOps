@@ -26,9 +26,16 @@ aws logs describe-log-streams \
 
 echo
 echo "=== CloudWatch Log Events (${LOG_STREAM_NAME}) ==="
-aws logs get-log-events \
+EVENTS_TEXT="$(aws logs get-log-events \
 	--log-group-name "$LOG_GROUP_NAME" \
 	--log-stream-name "$LOG_STREAM_NAME" \
 	--start-from-head \
 	--query "events[].message" \
-	--output text || echo "(no events found)"
+	--output text 2>/dev/null || true)"
+
+if [ -z "$EVENTS_TEXT" ] || [ "$EVENTS_TEXT" = "None" ]; then
+	echo "(no events found)"
+else
+	# AWS text output returns list items tab-separated; convert to one log entry per line.
+	printf "%s\n" "$EVENTS_TEXT" | tr '\t' '\n' | tr '\r' '\n'
+fi
