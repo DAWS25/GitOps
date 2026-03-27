@@ -1,0 +1,13 @@
+# Normalize text files and keep Unix line endings by default
+* text=auto eol=lf
+
+# Scripts and source files should remain LF on checkout
+*.sh text eol=lf
+*.bash text eol=lf
+*.zsh text eol=lf
+*.py text eol=lf
+
+# Windows-native scripts keep CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
