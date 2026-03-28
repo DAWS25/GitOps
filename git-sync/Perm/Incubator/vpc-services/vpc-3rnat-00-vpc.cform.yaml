@@ -46,7 +46,7 @@ Resources:
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: !Sub ${TenantId}-${EnvId}-vpc
+          Value: !Sub ${TenantId}-${EnvId}-vpc-services
         - Key: TenantId
           Value: !Sub ${TenantId}
         - Key: EnvId
