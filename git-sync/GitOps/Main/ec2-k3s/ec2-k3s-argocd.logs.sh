@@ -5,16 +5,18 @@
 
 set -e
 
-LOG_GROUP_NAME="${1:-}"
-LOG_STREAM_NAME="${2:-}"
+TENANT_ID="${TENANT_ID:-GitOps}"
+ENV_ID="${ENV_ID:-Main}"
+LOG_GROUP_NAME="${LOG_GROUP_NAME:-$TENANT_ID-$ENV_ID-logs}"
+LOG_STREAM_NAME="${LOG_STREAM_NAME:-"general-log-stream"}"
 
 if [ -z "$LOG_GROUP_NAME" ]; then
-	echo "Error: LOG_GROUP_NAME is required as the first argument"
+	echo "Error: LOG_GROUP_NAME is required"
 	exit 1
 fi
 
 if [ -z "$LOG_STREAM_NAME" ]; then
-	echo "Error: LOG_STREAM_NAME is required as the second argument"
+	echo "Error: LOG_STREAM_NAME is required"
 	exit 1
 fi
 

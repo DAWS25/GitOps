@@ -113,6 +113,7 @@ fi
 if [ -z "$LOG_GROUP_NAME" ] || [ "$LOG_GROUP_NAME" = "None" ]; then
 	echo "Warning: UserDataLogGroupName output was not found"
 else
+	export LOG_GROUP_NAME
 	echo
 	echo "CloudWatch user-data log group: $LOG_GROUP_NAME"
 fi
@@ -120,11 +121,12 @@ fi
 if [ -z "$LOG_STREAM_NAME" ] || [ "$LOG_STREAM_NAME" = "None" ]; then
 	echo "Warning: UserDataLogStreamName output was not found"
 else
+	export LOG_STREAM_NAME
 	echo "CloudWatch user-data log stream: $LOG_STREAM_NAME"
 fi
 
 if [ -n "$LOG_GROUP_NAME" ] && [ "$LOG_GROUP_NAME" != "None" ] && [ -n "$LOG_STREAM_NAME" ] && [ "$LOG_STREAM_NAME" != "None" ]; then
-	echo "Fetching user-data logs from CloudWatch..."
+	echo "Fetching user-data logs from CloudWatch Logs[$LOG_GROUP_NAME/$LOG_STREAM_NAME]..."
 	echo "#########################################"
 	"${SCRIPT_DIR}/ec2-k3s-argocd.logs.sh" "$LOG_GROUP_NAME" "$LOG_STREAM_NAME"
 fi
