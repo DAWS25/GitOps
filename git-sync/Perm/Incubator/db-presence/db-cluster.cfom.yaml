@@ -104,7 +104,7 @@ Resources:
       StorageEncrypted: true
       Tags:
         - Key: Name
-          Value: !Sub "${Te}${EnvId}-db-cluster"
+          Value: !Sub "${TenantId}-${EnvId}-db-cluster"
         - Key: Environment
           Value: !Ref EnvId
 
