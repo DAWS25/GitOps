@@ -1,4 +1,4 @@
-template-file-path: git-sync/Perm/Incubator/db-presence/db-cluster.cfom.yaml
+template-file-path: git-sync/Perm/Incubator/presence-db/db-cluster.cfom.yaml
 
 parameters: 
     TenantId: Perm
