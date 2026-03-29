@@ -5,18 +5,12 @@ Parameters:
     Default: main
     Description: Tenant identifier used to prefix exported outputs.
 
-  EnvId:
-    Type: String
-    Default: main
-    Description: Environment identifier used to prefix exported outputs.
-
   DomainName:
     Type: String
-    Description: Custom domain name for the CloudFront distribution (e.g., www.example.com)
+    Description: Custom domain name for the zone
     AllowedPattern: ^[a-zA-Z0-9][a-zA-Z0-9-_.]*[a-zA-Z0-9]$
 
 Resources:
-  # Route53 Record for custom domain
   HostedZone:
     Type: AWS::Route53::HostedZone
     Properties:
@@ -25,8 +19,14 @@ Resources:
         Comment: !Sub "Hosted zone for ${DomainName}"
 
 Outputs:
-  HostedZoneId:
+  ZoneId:
     Description: Hosted Zone ID for the custom domain
     Value: !Ref HostedZone
     Export:
-      Name: !Sub "${TenantId}-${EnvId}-HostedZoneId"
+      Name: !Sub "${TenantId}-HostedZoneId"
+
+  NameServers:
+    Description: Name server list for the hosted zone (comma-separated)
+    Value: !Join [",", !GetAtt HostedZone.NameServers]
+    Export:
+      Name: !Sub "${TenantId}-NameServers"
