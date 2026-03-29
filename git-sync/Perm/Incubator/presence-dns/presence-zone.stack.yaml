@@ -1,0 +1,12 @@
+template-file-path: git-sync/Perm/Incubator/presence-dns/web-zone.cform.yaml
+
+parameters: 
+    TenantId: Perm
+    EnvId: Incubator
+    DomainName: presence.daws25.com
+
+tags:
+    TenantId: Perm
+    EnvId: Incubator
+    ProjectId: Presence
+
