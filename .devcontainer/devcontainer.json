@@ -8,13 +8,16 @@
       "userUid": "1000",
       "userGid": "1000"
     },
-    "ghcr.io/devcontainers/features/docker-in-docker:2.14.0": {}
+    "ghcr.io/devcontainers/features/docker-in-docker:2.16.1": {},
+    "ghcr.io/devcontainers-extra/features/apt-packages:1": {
+      "packages": "iputils-ping"
+    }
   },
   "postCreateCommand": "./.devcontainer/post-create.sh",
 
   "remoteUser": "vscode",
 
-  "forwardPorts": [8080, 8443, 3000],
+  "forwardPorts": [10443],
 
   "remoteEnv": {
     "PATH": "${containerWorkspaceFolder}/.devbox/nix/profile/default/bin:${containerEnv:PATH}"
