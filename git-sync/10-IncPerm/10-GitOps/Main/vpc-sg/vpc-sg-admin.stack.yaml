@@ -1,4 +1,4 @@
-template-file-path: git-sync/GitOps/Main/ec2-gitops-keypair/ec2-gitops-keypair.cform.yaml
+template-file-path: git-sync/10-IncPerm/10-GitOps/Main/vpc-sg/vpc-sg-admin.cform.yaml
 
 parameters: 
     TenantId: GitOps

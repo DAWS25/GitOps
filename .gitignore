@@ -1,6 +1,8 @@
 # Secrets
 .secrets/
 secrets/
+GitOps-Secrets/
+GitOps-Secrets
 
 # Environment settings
 .envrc
@@ -49,4 +51,4 @@ pnpm-debug.log*
 modules/GitOps-Secrets/
 
 .aws-sam
-GitOps-Secrets
+

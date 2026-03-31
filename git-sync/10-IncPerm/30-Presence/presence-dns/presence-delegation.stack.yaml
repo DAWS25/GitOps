@@ -1,4 +1,4 @@
-template-file-path: git-sync/Perm/Incubator/presence-dns/dns-delegation.cform.yaml
+template-file-path: git-sync/10-IncPerm/30-Presence/presence-dns/dns-delegation.cform.yaml
 
 parameters: 
     TenantId: Perm

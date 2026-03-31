@@ -1,4 +1,4 @@
-template-file-path: git-sync/Perm/Incubator/vpc-services/vpc-3rnat-00-vpc.cform.yaml
+template-file-path: git-sync/10-IncPerm/20-Shared/vpc-services/vpc-3rnat-00-vpc.cform.yaml
 
 parameters: 
     TenantId: Perm
