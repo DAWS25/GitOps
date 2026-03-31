@@ -11,13 +11,17 @@ Parameters:
 
   BucketName:
     Type: String
+    Default: ""
     Description: S3 bucket name for GitOps artifacts (must be globally unique and lowercase)
+
+Conditions:
+  HasName: !Equals [!Ref BucketName, ""]
 
 Resources:
   GitopsArtifactsBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Ref BucketName
+      BucketName: !If [HasName, !Ref BucketName, !Sub ${TenantId}-${EnvId}-artifacts-${AWS::AccountId}]
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true

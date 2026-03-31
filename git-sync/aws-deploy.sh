@@ -8,29 +8,44 @@ BASE_DIR="${DIR}"
 BRANCH="${GIT_SYNC_BRANCH:-main}"
 REPOSITORY_LINK_ID="${REPOSITORY_LINK_ID:-}"
 ROLE_ARN="${GIT_SYNC_ROLE_ARN:-}"
-DRY_RUN=0
+SLEEP_BETWEEN_STACKS_SECONDS=60
 
 log() {
 	echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*"
 }
 
+load_repo_envrc() {
+	local envrc_path="${REPO_ROOT}/.envrc"
+	if [[ -f "${envrc_path}" ]]; then
+		log "loading env from ${envrc_path}"
+		set +u
+		# shellcheck disable=SC1090
+		source "${envrc_path}"
+		set -u
+	fi
+
+	# Refresh runtime config from environment after sourcing .envrc
+	BRANCH="${GIT_SYNC_BRANCH:-main}"
+	REPOSITORY_LINK_ID="${REPOSITORY_LINK_ID:-}"
+	ROLE_ARN="${GIT_SYNC_ROLE_ARN:-}"
+}
+
 usage() {
 	cat <<'EOF'
-Usage: git-sync/aws-deploy.sh --repository-link-id <id> --role-arn <arn> [options]
+Usage: git-sync/aws-deploy.sh [options]
 
 Options:
-	--repository-link-id <id>   Required. CodeConnections repository link ID.
-	--role-arn <arn>            Required. IAM role ARN used by Git sync.
-	--branch <name>             Branch to sync from. Default: main.
-	--base-dir <path>           Directory to scan recursively. Default: git-sync/.
-	--dry-run                   Print actions without calling AWS APIs.
 	-h, --help                  Show this help.
 
 Behavior:
-	- Finds all *.stack.yaml files recursively under --base-dir in name order.
+	- Reads config from env vars: REPOSITORY_LINK_ID, GIT_SYNC_ROLE_ARN, GIT_SYNC_BRANCH.
+	- Finds all *.stack.yaml files recursively under git-sync/ in name order.
 	- Extracts TenantId and EnvId from each YAML file.
 	- Computes RootName as the filename prefix before the first dot.
 	- Builds stack name as TenantId-EnvId-RootName.
+	- Bootstraps missing stacks with cloudformation deploy.
+	- Verifies each stack reaches a successful terminal status before continuing.
+	- Sleeps 60 seconds between stack files.
 	- Creates CFN_STACK_SYNC config using create-sync-configuration.
 	- Skips stacks that already have a sync configuration.
 EOF
@@ -46,26 +61,6 @@ require_cmd() {
 parse_args() {
 	while [[ $# -gt 0 ]]; do
 		case "$1" in
-			--repository-link-id)
-				REPOSITORY_LINK_ID="${2:-}"
-				shift 2
-				;;
-			--role-arn)
-				ROLE_ARN="${2:-}"
-				shift 2
-				;;
-			--branch)
-				BRANCH="${2:-}"
-				shift 2
-				;;
-			--base-dir)
-				BASE_DIR="${2:-}"
-				shift 2
-				;;
-			--dry-run)
-				DRY_RUN=1
-				shift
-				;;
 			-h|--help)
 				usage
 				exit 0
@@ -78,8 +73,8 @@ parse_args() {
 		esac
 	done
 
-	if [[ -z "${REPOSITORY_LINK_ID}" || -z "${ROLE_ARN}" ]]; then
-		echo "ERROR: --repository-link-id and --role-arn are required." >&2
+	if [[ -z "${REPOSITORY_LINK_ID}" || -z "${ROLE_ARN}" || -z "${BRANCH}" ]]; then
+		echo "ERROR: missing required env vars: REPOSITORY_LINK_ID, GIT_SYNC_ROLE_ARN, GIT_SYNC_BRANCH" >&2
 		usage
 		exit 1
 	fi
@@ -113,6 +108,28 @@ yaml_value() {
 	' "$file"
 }
 
+yaml_section_key_values() {
+	local file="$1"
+	local section="$2"
+	awk -v section="$section" '
+		$0 ~ "^[[:space:]]*" section ":[[:space:]]*$" { in_section=1; next }
+		in_section {
+			if ($0 ~ "^[^[:space:]]") { exit }
+			if ($0 ~ "^[[:space:]]+[A-Za-z0-9_.-]+:[[:space:]]*") {
+				line=$0
+				sub(/^[[:space:]]+/, "", line)
+				key=line
+				sub(/:.*/, "", key)
+				value=line
+				sub(/^[^:]+:[[:space:]]*/, "", value)
+				gsub(/^"|"$/, "", value)
+				gsub(/^'\''|'\''$/, "", value)
+				print key "=" value
+			}
+		}
+	' "$file"
+}
+
 list_stack_files() {
 	local base="$1"
 	find "$base" -type f -name '*.stack.yaml' | sort
@@ -125,6 +142,102 @@ existing_config_file_for_stack() {
 		--sync-type CFN_STACK_SYNC \
 		--query "SyncConfigurations[?ResourceName=='${stack_name}'].ConfigFile" \
 		--output text 2>/dev/null || true
+}
+
+stack_exists() {
+	local stack_name="$1"
+	aws cloudformation describe-stacks --stack-name "${stack_name}" >/dev/null 2>&1
+}
+
+stack_status() {
+	local stack_name="$1"
+	aws cloudformation describe-stacks \
+		--stack-name "${stack_name}" \
+		--query 'Stacks[0].StackStatus' \
+		--output text 2>/dev/null || true
+}
+
+wait_for_stack_success() {
+	local stack_name="$1"
+	local max_checks=120
+	local check=1
+	local status
+
+	while (( check <= max_checks )); do
+		status="$(stack_status "${stack_name}")"
+
+		case "${status}" in
+			CREATE_COMPLETE|UPDATE_COMPLETE|IMPORT_COMPLETE)
+				log "READY stack=${stack_name} status=${status}"
+				return 0
+				;;
+			*_IN_PROGRESS|REVIEW_IN_PROGRESS|UPDATE_COMPLETE_CLEANUP_IN_PROGRESS|UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS)
+				log "WAIT  stack=${stack_name} status=${status} check=${check}/${max_checks}"
+				sleep 10
+				check=$((check + 1))
+				;;
+			"")
+				log "WAIT  stack=${stack_name} status=NOT_FOUND check=${check}/${max_checks}"
+				sleep 10
+				check=$((check + 1))
+				;;
+			*)
+				log "ERROR stack=${stack_name} status=${status}"
+				return 1
+				;;
+		esac
+	done
+
+	log "ERROR stack=${stack_name} timed out waiting for successful status"
+	return 1
+}
+
+bootstrap_stack_if_missing() {
+	local stack_name="$1"
+	local template_path="$2"
+	local stack_file="$3"
+	local -a param_overrides tag_overrides deploy_cmd
+
+	if stack_exists "${stack_name}"; then
+		return 0
+	fi
+
+	if [[ -z "${template_path}" ]]; then
+		log "SKIP  bootstrap stack=${stack_name} missing template-file-path"
+		return 0
+	fi
+
+	if [[ ! -f "${REPO_ROOT}/${template_path}" ]]; then
+		log "SKIP  bootstrap stack=${stack_name} template not found: ${template_path}"
+		return 0
+	fi
+
+	while IFS= read -r kv; do
+		[[ -n "${kv}" ]] && param_overrides+=("${kv}")
+	done < <(yaml_section_key_values "${stack_file}" "parameters")
+
+	while IFS= read -r kv; do
+		[[ -n "${kv}" ]] && tag_overrides+=("${kv}")
+	done < <(yaml_section_key_values "${stack_file}" "tags")
+
+	log "BOOTSTRAP stack=${stack_name} template=${template_path}"
+	deploy_cmd=(
+		aws cloudformation deploy
+		--stack-name "${stack_name}"
+		--template-file "${REPO_ROOT}/${template_path}"
+		--capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND
+		--no-fail-on-empty-changeset
+	)
+
+	if (( ${#param_overrides[@]} > 0 )); then
+		deploy_cmd+=(--parameter-overrides "${param_overrides[@]}")
+	fi
+
+	if (( ${#tag_overrides[@]} > 0 )); then
+		deploy_cmd+=(--tags "${tag_overrides[@]}")
+	fi
+
+	"${deploy_cmd[@]}" >/dev/null
 }
 
 create_sync_for_stack_file() {
@@ -151,41 +264,47 @@ create_sync_for_stack_file() {
 		log "WARN  template not found: ${template_path} (referenced by ${config_file})"
 	fi
 
+	bootstrap_stack_if_missing "${stack_name}" "${template_path}" "${file}"
+
+	if ! stack_exists "${stack_name}"; then
+		log "ERROR stack=${stack_name} does not exist after bootstrap/validation"
+		return 1
+	fi
+
+	wait_for_stack_success "${stack_name}"
+
 	existing_cf="$(existing_config_file_for_stack "${stack_name}")"
 
 	if [[ -z "${existing_cf}" || "${existing_cf}" == "None" ]]; then
 		log "CREATE stack=${stack_name} config=${config_file}"
-		if (( DRY_RUN == 0 )); then
-			aws codeconnections create-sync-configuration \
-				--branch "${BRANCH}" \
-				--config-file "${config_file}" \
-				--repository-link-id "${REPOSITORY_LINK_ID}" \
-				--resource-name "${stack_name}" \
-				--role-arn "${ROLE_ARN}" \
-				--sync-type CFN_STACK_SYNC \
-				--publish-deployment-status ENABLED \
-				--trigger-resource-update-on FILE_CHANGE \
-				--pull-request-comment DISABLED \
-				>/dev/null
-		fi
+		aws codeconnections create-sync-configuration \
+			--branch "${BRANCH}" \
+			--config-file "${config_file}" \
+			--repository-link-id "${REPOSITORY_LINK_ID}" \
+			--resource-name "${stack_name}" \
+			--role-arn "${ROLE_ARN}" \
+			--sync-type CFN_STACK_SYNC \
+			--publish-deployment-status ENABLED \
+			--trigger-resource-update-on FILE_CHANGE \
+			--pull-request-comment DISABLED \
+			>/dev/null
 	elif [[ "${existing_cf}" != "${config_file}" ]]; then
 		log "UPDATE stack=${stack_name} old-config=${existing_cf} -> new-config=${config_file}"
-		if (( DRY_RUN == 0 )); then
-			aws codeconnections update-sync-configuration \
-				--resource-name "${stack_name}" \
-				--sync-type CFN_STACK_SYNC \
-				--branch "${BRANCH}" \
-				--config-file "${config_file}" \
-				--repository-link-id "${REPOSITORY_LINK_ID}" \
-				--role-arn "${ROLE_ARN}" \
-				>/dev/null
-		fi
+		aws codeconnections update-sync-configuration \
+			--resource-name "${stack_name}" \
+			--sync-type CFN_STACK_SYNC \
+			--branch "${BRANCH}" \
+			--config-file "${config_file}" \
+			--repository-link-id "${REPOSITORY_LINK_ID}" \
+			--role-arn "${ROLE_ARN}" \
+			>/dev/null
 	else
 		log "SKIP  stack=${stack_name} config=${config_file}"
 	fi
 }
 
 main() {
+	load_repo_envrc
 	parse_args "$@"
 	require_cmd aws
 	require_cmd find
@@ -199,10 +318,17 @@ main() {
 
 	log "script [$0] started dir[${DIR}] base-dir[${BASE_DIR}] branch[${BRANCH}]"
 
+	local total
+	total="$(list_stack_files "${BASE_DIR}" | wc -l | tr -d ' ')"
+
 	local count=0
 	while IFS= read -r stack_file; do
 		create_sync_for_stack_file "${stack_file}"
 		count=$((count + 1))
+		if (( count < total )); then
+			log "SLEEP ${SLEEP_BETWEEN_STACKS_SECONDS}s before next stack"
+			sleep "${SLEEP_BETWEEN_STACKS_SECONDS}"
+		fi
 	done < <(list_stack_files "${BASE_DIR}")
 
 	log "processed stack files: ${count}"

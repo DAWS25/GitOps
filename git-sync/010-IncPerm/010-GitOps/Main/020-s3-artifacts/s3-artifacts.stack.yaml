@@ -3,7 +3,6 @@ template-file-path: git-sync/010-IncPerm/010-GitOps/Main/020-s3-artifacts/s3-art
 parameters: 
     TenantId: GitOps
     EnvId: Main
-    BucketName: gitops-main-artifacts-20250326
     
 tags:
   TenantId: GitOps
