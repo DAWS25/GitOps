@@ -1,4 +1,4 @@
-template-file-path: git-sync/10-IncPerm/30-Presence/presence-db/db-cluster.cform.yaml
+template-file-path: git-sync/010-IncPerm/030-Presence/020-presence-db/db-cluster.cform.yaml
 
 parameters: 
     TenantId: Perm
