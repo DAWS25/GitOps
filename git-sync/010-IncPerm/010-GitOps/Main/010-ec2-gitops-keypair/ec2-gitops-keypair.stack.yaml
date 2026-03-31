@@ -7,3 +7,5 @@ parameters:
 tags:
   TenantId: GitOps
   EnvId: Main
+
+# sync-test: trigger one-file update for CFN stack sync validation
