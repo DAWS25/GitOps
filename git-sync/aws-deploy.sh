@@ -102,6 +102,7 @@ yaml_value() {
 			sub(/[[:space:]]+$/, "", $2)
 			gsub(/^"|"$/, "", $2)
 			gsub(/^'"'"'|'"'"'$/, "", $2)
+			gsub(/\r/, "", $2)
 			print $2
 			exit
 		}
@@ -124,6 +125,8 @@ yaml_section_key_values() {
 				sub(/^[^:]+:[[:space:]]*/, "", value)
 				gsub(/^"|"$/, "", value)
 				gsub(/^'\''|'\''$/, "", value)
+				gsub(/\r/, "", key)
+				gsub(/\r/, "", value)
 				print key "=" value
 			}
 		}
