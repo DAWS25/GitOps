@@ -20,7 +20,8 @@ for MODULE_DIR in modules/*/; do
     if [ -f "./README.md" ]; then
         echo "Submodule $MODULE_DIR found. Updating to latest commit on origin main branch..."
         git fetch origin main
-        git checkout origin/main
+        git checkout main
+        git reset --hard origin/main
     else
         echo "Submodule $MODULE_DIR not found or not initialized. Initializing submodule..."
         git submodule update --init --recursive .
