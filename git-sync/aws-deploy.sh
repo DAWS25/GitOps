@@ -118,20 +118,18 @@ list_stack_files() {
 	find "$base" -type f -name '*.stack.yaml' | sort
 }
 
-sync_exists_for_stack() {
+existing_config_file_for_stack() {
 	local stack_name="$1"
-	local existing
-	existing=$(aws codeconnections list-sync-configurations \
+	aws codeconnections list-sync-configurations \
 		--repository-link-id "${REPOSITORY_LINK_ID}" \
 		--sync-type CFN_STACK_SYNC \
-		--query "SyncConfigurations[?ResourceName=='${stack_name}'].ResourceName" \
-		--output text 2>/dev/null || true)
-	[[ -n "${existing}" && "${existing}" != "None" ]]
+		--query "SyncConfigurations[?ResourceName=='${stack_name}'].ConfigFile" \
+		--output text 2>/dev/null || true
 }
 
 create_sync_for_stack_file() {
 	local file="$1"
-	local tenant_id env_id root_name stack_name config_file template_path
+	local tenant_id env_id root_name stack_name config_file template_path existing_cf
 
 	tenant_id="$(yaml_value "$file" "TenantId")"
 	env_id="$(yaml_value "$file" "EnvId")"
@@ -153,27 +151,38 @@ create_sync_for_stack_file() {
 		log "WARN  template not found: ${template_path} (referenced by ${config_file})"
 	fi
 
-	if sync_exists_for_stack "${stack_name}"; then
-		log "SKIP  sync exists stack=${stack_name} template=${template_path}"
-		return 0
-	fi
+	existing_cf="$(existing_config_file_for_stack "${stack_name}")"
 
-	log "CREATE sync stack=${stack_name} template=${template_path}"
-	if (( DRY_RUN == 1 )); then
-		return 0
+	if [[ -z "${existing_cf}" || "${existing_cf}" == "None" ]]; then
+		log "CREATE stack=${stack_name} config=${config_file}"
+		if (( DRY_RUN == 0 )); then
+			aws codeconnections create-sync-configuration \
+				--branch "${BRANCH}" \
+				--config-file "${config_file}" \
+				--repository-link-id "${REPOSITORY_LINK_ID}" \
+				--resource-name "${stack_name}" \
+				--role-arn "${ROLE_ARN}" \
+				--sync-type CFN_STACK_SYNC \
+				--publish-deployment-status ENABLED \
+				--trigger-resource-update-on FILE_CHANGE \
+				--pull-request-comment DISABLED \
+				>/dev/null
+		fi
+	elif [[ "${existing_cf}" != "${config_file}" ]]; then
+		log "UPDATE stack=${stack_name} old-config=${existing_cf} -> new-config=${config_file}"
+		if (( DRY_RUN == 0 )); then
+			aws codeconnections update-sync-configuration \
+				--resource-name "${stack_name}" \
+				--sync-type CFN_STACK_SYNC \
+				--branch "${BRANCH}" \
+				--config-file "${config_file}" \
+				--repository-link-id "${REPOSITORY_LINK_ID}" \
+				--role-arn "${ROLE_ARN}" \
+				>/dev/null
+		fi
+	else
+		log "SKIP  stack=${stack_name} config=${config_file}"
 	fi
-
-	aws codeconnections create-sync-configuration \
-		--branch "${BRANCH}" \
-		--config-file "${config_file}" \
-		--repository-link-id "${REPOSITORY_LINK_ID}" \
-		--resource-name "${stack_name}" \
-		--role-arn "${ROLE_ARN}" \
-		--sync-type CFN_STACK_SYNC \
-		--publish-deployment-status ENABLED \
-		--trigger-resource-update-on FILE_CHANGE \
-		--pull-request-comment DISABLED \
-		>/dev/null
 }
 
 main() {
