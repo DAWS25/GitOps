@@ -1,3 +1,5 @@
+Description: Remote admin security group with SSH access.
+
 Parameters:
   TenantId:
     Type: String

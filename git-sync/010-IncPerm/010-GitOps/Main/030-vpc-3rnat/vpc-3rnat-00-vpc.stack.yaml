@@ -1,9 +1,0 @@
-template-file-path: git-sync/010-IncPerm/010-GitOps/Main/030-vpc-3rnat/vpc-3rnat-00-vpc.cform.yaml
-
-parameters: 
-    TenantId: GitOps
-    EnvId: Main
-
-tags:
-  TenantId: GitOps
-  EnvId: Main
