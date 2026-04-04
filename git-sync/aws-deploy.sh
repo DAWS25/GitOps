@@ -133,6 +133,14 @@ yaml_section_key_values() {
 	' "$file"
 }
 
+file_sha256() {
+	if command -v sha256sum >/dev/null 2>&1; then
+		sha256sum "$1" | awk '{print $1}'
+	else
+		shasum -a 256 "$1" | awk '{print $1}'
+	fi
+}
+
 list_stack_files() {
 	local base="$1"
 	find "$base" -type f -name '*.stack.yaml' | sort
@@ -211,6 +219,19 @@ deploy_stack() {
 		return 0
 	fi
 
+	local sha256_file="${REPO_ROOT}/${template_path%.*}.sha256.txt"
+	local current_hash
+	current_hash="$(file_sha256 "${REPO_ROOT}/${template_path}")"
+
+	if stack_exists "${stack_name}" && [[ -f "${sha256_file}" ]]; then
+		local stored_hash
+		stored_hash="$(cat "${sha256_file}")"
+		if [[ "${current_hash}" == "${stored_hash}" ]]; then
+			log "SKIP  stack=${stack_name} template unchanged (sha256 match)"
+			return 0
+		fi
+	fi
+
 	while IFS= read -r kv; do
 		[[ -n "${kv}" ]] && param_overrides+=("${kv}")
 	done < <(yaml_section_key_values "${stack_file}" "parameters")
@@ -241,6 +262,8 @@ deploy_stack() {
 	fi
 
 	"${deploy_cmd[@]}" >/dev/null
+	echo "${current_hash}" > "${sha256_file}"
+	log "SHA256 stack=${stack_name} hash cached to ${template_path%.*}.sha256.txt"
 }
 
 create_sync_for_stack_file() {

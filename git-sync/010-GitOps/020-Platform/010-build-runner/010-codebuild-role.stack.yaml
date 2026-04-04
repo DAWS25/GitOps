@@ -1,9 +1,9 @@
-template-file-path: git-sync/020-IncPerm/020-Platform/010-build-runner/010-codebuild-role.cform.yaml
+template-file-path: git-sync/010-GitOps/020-Platform/010-build-runner/010-codebuild-role.stack.yaml
 parameters: 
-    TenantId: IncPerm
-    EnvId: main-env
+    TenantId: GitOps
+    EnvId: Main
     ManagedPolicyArn: arn:aws:iam::aws:policy/AdministratorAccess
 
 tags:
-    TenantId: IncPerm
-    ProjectId: Presence
+    TenantId: GitOps
+    EnvId: Main
