@@ -1,10 +1,10 @@
 template-file-path: git-sync/020-IncPerm/030-Presence/010-presence-dns/dns-zone.cform.yaml
 
 parameters: 
-    TenantId: Perm
+    TenantId: IncPerm
     DomainName: presence.daws25.com
 
 tags:
-    TenantId: Perm
+    TenantId: IncPerm
     ProjectId: Presence
 

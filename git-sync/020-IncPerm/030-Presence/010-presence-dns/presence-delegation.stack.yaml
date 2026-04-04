@@ -1,10 +1,10 @@
 template-file-path: git-sync/020-IncPerm/030-Presence/010-presence-dns/dns-delegation.cform.yaml
 
 parameters: 
-    TenantId: Perm
+    TenantId: IncPerm
     DomainName: presence.daws25.com
     ParentHostedZoneId: Z03647633PSGP4NGRHD23
 
 tags:
-    TenantId: Perm
+    TenantId: IncPerm
     ProjectId: Presence

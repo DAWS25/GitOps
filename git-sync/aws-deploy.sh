@@ -8,7 +8,7 @@ BASE_DIR="${DIR}"
 BRANCH="${GIT_SYNC_BRANCH:-main}"
 REPOSITORY_LINK_ID="${REPOSITORY_LINK_ID:-}"
 ROLE_ARN="${GIT_SYNC_ROLE_ARN:-}"
-SLEEP_BETWEEN_STACKS_SECONDS=60
+SLEEP_BETWEEN_STACKS_SECONDS=2
 
 log() {
 	echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*"
@@ -45,7 +45,7 @@ Behavior:
 	- Builds stack name as TenantId-EnvId-RootName.
 	- Bootstraps missing stacks with cloudformation deploy.
 	- Verifies each stack reaches a successful terminal status before continuing.
-	- Sleeps 60 seconds between stack files.
+	- Sleeps $SLEEP_BETWEEN_STACKS_SECONDS seconds between stack files.
 	- Creates CFN_STACK_SYNC config using create-sync-configuration.
 	- Skips stacks that already have a sync configuration.
 EOF

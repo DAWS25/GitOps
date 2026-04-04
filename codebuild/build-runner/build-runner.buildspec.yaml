@@ -1,0 +1,10 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - echo "Build phase started on `date`"
+      - echo "Running build commands..."
+      # print all env vars
+      - printenv
+      - echo "Build phase completed on `date`"

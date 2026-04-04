@@ -1,0 +1,53 @@
+# aws cloudformation deploy --stack-name build-runner --template-file codebuild/build-runner/010-codebuild-runner.cform.yaml --capabilities CAPABILITY_IAM
+AWSTemplateFormatVersion: 2010-09-09
+Description: CodeBuild role for script runner
+
+Parameters:
+  TenantId:
+    Type: String
+    Default: main-tenant
+    Description: Tenant ID for shared resources (e.g. VPC, DB)
+
+  EnvId:
+    Type: String
+    Default: main-env
+    Description: Environment ID for deployment (e.g. blue, green)
+
+  ManagedPolicyArn:
+    Type: String
+    Default: arn:aws:iam::aws:policy/AdministratorAccess
+    Description: ARN of the managed policy to attach to the CodeBuild role
+  
+Resources:
+  BuildRunnerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${TenantId}-${EnvId}-build-runner-role"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Ref ManagedPolicyArn
+
+Outputs:
+  BuildRunnerRoleName:
+    Description: Name of the Build Runner role
+    Value: !Ref BuildRunnerRole
+    Export:
+      Name: !Sub "${TenantId}-${EnvId}-build-runner-role-arn"
+
+  BuildRunnerRoleArn:
+    Description: ARN of the Build Runner role
+    Value: !GetAtt BuildRunnerRole.Arn
+    Export:
+      Name: !Sub "${TenantId}-${EnvId}-build-runner-role-arn"
+  
+  BuildRunnerRoleId:
+    Description: ID of the Build Runner role
+    Value: !GetAtt BuildRunnerRole.RoleId
+    Export:
+      Name: !Sub "${TenantId}-${EnvId}-build-runner-role-id"

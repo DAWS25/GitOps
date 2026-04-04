@@ -1,9 +1,9 @@
 template-file-path: git-sync/020-IncPerm/010-Shared/010-vpc-services/vpc-3rnat-00-vpc.cform.yaml
 
 parameters: 
-    TenantId: Perm
+    TenantId: IncPerm
     EnvId: Incubator
 
 tags:
-    TenantId: Perm
+    TenantId: IncPerm
     EnvId: Incubator
