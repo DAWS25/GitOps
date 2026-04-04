@@ -195,23 +195,19 @@ wait_for_stack_success() {
 	return 1
 }
 
-bootstrap_stack_if_missing() {
+deploy_stack() {
 	local stack_name="$1"
 	local template_path="$2"
 	local stack_file="$3"
 	local -a param_overrides tag_overrides deploy_cmd
 
-	if stack_exists "${stack_name}"; then
-		return 0
-	fi
-
 	if [[ -z "${template_path}" ]]; then
-		log "SKIP  bootstrap stack=${stack_name} missing template-file-path"
+		log "SKIP  deploy stack=${stack_name} missing template-file-path"
 		return 0
 	fi
 
 	if [[ ! -f "${REPO_ROOT}/${template_path}" ]]; then
-		log "SKIP  bootstrap stack=${stack_name} template not found: ${template_path}"
+		log "SKIP  deploy stack=${stack_name} template not found: ${template_path}"
 		return 0
 	fi
 
@@ -223,7 +219,11 @@ bootstrap_stack_if_missing() {
 		[[ -n "${kv}" ]] && tag_overrides+=("${kv}")
 	done < <(yaml_section_key_values "${stack_file}" "tags")
 
-	log "BOOTSTRAP stack=${stack_name} template=${template_path}"
+	if stack_exists "${stack_name}"; then
+		log "UPDATE stack=${stack_name} template=${template_path}"
+	else
+		log "CREATE stack=${stack_name} template=${template_path}"
+	fi
 	deploy_cmd=(
 		aws cloudformation deploy
 		--stack-name "${stack_name}"
@@ -267,7 +267,7 @@ create_sync_for_stack_file() {
 		log "WARN  template not found: ${template_path} (referenced by ${config_file})"
 	fi
 
-	bootstrap_stack_if_missing "${stack_name}" "${template_path}" "${file}"
+	deploy_stack "${stack_name}" "${template_path}" "${file}"
 
 	if ! stack_exists "${stack_name}"; then
 		log "ERROR stack=${stack_name} does not exist after bootstrap/validation"

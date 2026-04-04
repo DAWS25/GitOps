@@ -31,6 +31,6 @@ Resources:
 Outputs:
   AdminSecurityGroupId:
     Description: Security Group ID for the admin security group
-    Value: !Ref AdminSecurityGroup
+    Value: !GetAtt AdminSecurityGroup.GroupId
     Export:
       Name: !Sub ${TenantId}-${EnvId}-AdminSecurityGroupId
