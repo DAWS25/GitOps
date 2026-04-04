@@ -85,8 +85,16 @@ Parameters:
     Description: Environment ID
 
 Resources:
+  GitHubSourceCredential:
+    Type: AWS::CodeBuild::SourceCredential
+    Properties:
+      AuthType: PERSONAL_ACCESS_TOKEN
+      ServerType: GITHUB
+      Token: !Sub "{{resolve:secretsmanager:${GitHubTokenSecret}}}"
+
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
+    DependsOn: GitHubSourceCredential
     Properties:
       Name: !Ref ProjectName
       Description: !Sub "${ProjectName} build project"
