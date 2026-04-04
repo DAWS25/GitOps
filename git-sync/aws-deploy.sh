@@ -9,6 +9,8 @@ BRANCH="${GIT_SYNC_BRANCH:-main}"
 REPOSITORY_LINK_ID="${REPOSITORY_LINK_ID:-}"
 ROLE_ARN="${GIT_SYNC_ROLE_ARN:-}"
 SLEEP_BETWEEN_STACKS_SECONDS=2
+_SUMMARY=()
+_LAST_ACTION=""
 
 log() {
 	echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*"
@@ -211,11 +213,13 @@ deploy_stack() {
 
 	if [[ -z "${template_path}" ]]; then
 		log "SKIP  deploy stack=${stack_name} missing template-file-path"
+		_LAST_ACTION="skipped"
 		return 0
 	fi
 
 	if [[ ! -f "${REPO_ROOT}/${template_path}" ]]; then
 		log "SKIP  deploy stack=${stack_name} template not found: ${template_path}"
+		_LAST_ACTION="skipped"
 		return 0
 	fi
 
@@ -228,6 +232,7 @@ deploy_stack() {
 		stored_hash="$(cat "${sha256_file}")"
 		if [[ "${current_hash}" == "${stored_hash}" ]]; then
 			log "SKIP  stack=${stack_name} template unchanged (sha256 match)"
+			_LAST_ACTION="skipped"
 			return 0
 		fi
 	fi
@@ -242,8 +247,10 @@ deploy_stack() {
 
 	if stack_exists "${stack_name}"; then
 		log "UPDATE stack=${stack_name} template=${template_path}"
+		_LAST_ACTION="updated"
 	else
 		log "CREATE stack=${stack_name} template=${template_path}"
+		_LAST_ACTION="created"
 	fi
 	deploy_cmd=(
 		aws cloudformation deploy
@@ -269,6 +276,7 @@ deploy_stack() {
 create_sync_for_stack_file() {
 	local file="$1"
 	local tenant_id env_id root_name stack_name config_file template_path existing_cf
+	_LAST_ACTION="skipped"
 
 	tenant_id="$(yaml_value "$file" "TenantId")"
 	env_id="$(yaml_value "$file" "EnvId")"
@@ -327,6 +335,27 @@ create_sync_for_stack_file() {
 	else
 		log "SKIP  stack=${stack_name} config=${config_file}"
 	fi
+
+	local final_status sha256_val
+	final_status="$(stack_status "${stack_name}")"
+	sha256_val="n/a"
+	if [[ -n "${template_path}" && -f "${REPO_ROOT}/${template_path%.*}.sha256.txt" ]]; then
+		sha256_val="$(cat "${REPO_ROOT}/${template_path%.*}.sha256.txt")"
+		sha256_val="${sha256_val:0:12}"
+	fi
+	_SUMMARY+=("$(printf '%-55s  %-8s  %-22s  %s' "${stack_name}" "${_LAST_ACTION}" "${final_status}" "${sha256_val}")");
+}
+
+print_summary() {
+	printf '\n'
+	log "=== DEPLOY SUMMARY (${#_SUMMARY[@]} stacks) ==="
+	printf '  %-55s  %-8s  %-22s  %s\n' "STACK" "ACTION" "STATUS" "SHA256"
+	printf '  %-55s  %-8s  %-22s  %s\n' "-----" "------" "------" "------"
+	local entry
+	for entry in "${_SUMMARY[@]+${_SUMMARY[@]}}"; do
+		printf '  %s\n' "${entry}"
+	done
+	printf '\n'
 }
 
 main() {
@@ -358,6 +387,7 @@ main() {
 	done < <(list_stack_files "${BASE_DIR}")
 
 	log "processed stack files: ${count}"
+	print_summary
 	log "script [$0] completed"
 }
 

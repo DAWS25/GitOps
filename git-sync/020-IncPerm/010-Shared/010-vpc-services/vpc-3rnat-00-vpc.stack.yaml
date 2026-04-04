@@ -2,8 +2,8 @@ template-file-path: git-sync/020-IncPerm/010-Shared/010-vpc-services/vpc-3rnat-0
 
 parameters: 
     TenantId: IncPerm
-    EnvId: Incubator
+    EnvId: Shared
 
 tags:
     TenantId: IncPerm
-    EnvId: Incubator
+    EnvId: Shared

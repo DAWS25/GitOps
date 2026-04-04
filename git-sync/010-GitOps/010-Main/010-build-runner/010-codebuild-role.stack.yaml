@@ -1,4 +1,4 @@
-template-file-path: git-sync/010-GitOps/020-Platform/010-build-runner/010-codebuild-role.stack.yaml
+template-file-path: git-sync/010-GitOps/020-Platform/010-build-runner/010-codebuild-role.cform.yaml
 parameters: 
     TenantId: GitOps
     EnvId: Main

@@ -1,0 +1,8 @@
+template-file-path: git-sync/010-GitOps/020-Platform/010-build-runner/020-codebuild-runner.cform.yaml
+parameters: 
+    TenantId: GitOps
+    EnvId: Main
+
+tags:
+    TenantId: GitOps
+    EnvId: Main
