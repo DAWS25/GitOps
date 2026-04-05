@@ -46,6 +46,8 @@ sam deploy --template-file template.yaml \
     --stack-name "${SAM_STACK_NAME}" \
     --capabilities CAPABILITY_NAMED_IAM \
     --resolve-s3 \
+    --no-confirm-changeset \
+    --no-fail-on-empty-changeset \
     --parameter-overrides \
         TenantId=${TENANT_ID} \
         EnvId=${ENV_ID} \
