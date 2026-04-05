@@ -7,6 +7,7 @@ echo "Starting Presence web app hook..."
 # Verify that the module is initialized
 TENANT_ID="Presence"
 ENV_ID="Main"
+VPC_TENANT_ID="IncPerm"
 MODULE_DIR="${REPO_ROOT}/modules/Presence"
 
 # Iniialize git submodule or pull the module to main branch
@@ -51,6 +52,7 @@ sam deploy --template-file template.yaml \
     --parameter-overrides \
         TenantId=${TENANT_ID} \
         EnvId=${ENV_ID} \
+        VPCTenantId=${VPC_TENANT_ID} \
         AppVersion=${APP_VERSION} \
         GitCommit=${GIT_COMMIT}
 popd
@@ -61,7 +63,7 @@ echo "Deploying Presence Lambda@Edge auth function..."
 sam deploy \
     --stack-name "${SAM_STACK_NAME}" \
     --resolve-s3 \
-    --parameter-overrides EnvId=${ENV_ID} \
+    --parameter-overrides TenantId=${TENANT_ID} EnvId=${ENV_ID} \
     --capabilities CAPABILITY_IAM \
     --no-fail-on-empty-changeset \
     --no-confirm-changeset
@@ -74,7 +76,7 @@ echo "Deploying Presence Lambda@Edge CORS function..."
 sam deploy \
     --stack-name "${SAM_STACK_NAME}" \
     --resolve-s3 \
-    --parameter-overrides EnvId=${ENV_ID} \
+    --parameter-overrides TenantId=${TENANT_ID} EnvId=${ENV_ID} \
     --capabilities CAPABILITY_IAM \
     --no-fail-on-empty-changeset \
     --no-confirm-changeset
@@ -87,7 +89,7 @@ SAM_STACK_NAME="${TENANT_ID}-${ENV_ID}-Edge-Health"
 sam deploy \
     --stack-name "${SAM_STACK_NAME}" \
     --resolve-s3 \
-    --parameter-overrides EnvId=${ENV_ID} \
+    --parameter-overrides TenantId=${TENANT_ID} EnvId=${ENV_ID} \
     --capabilities CAPABILITY_IAM \
     --no-fail-on-empty-changeset \
     --no-confirm-changeset
@@ -100,7 +102,7 @@ echo "Deploying Presence Lambda@Edge root redirect function..."
 sam deploy \
     --stack-name "${SAM_STACK_NAME}" \
     --resolve-s3 \
-    --parameter-overrides EnvId=${ENV_ID} \
+    --parameter-overrides TenantId=${TENANT_ID} EnvId=${ENV_ID} \
     --capabilities CAPABILITY_IAM \
     --no-fail-on-empty-changeset \
     --no-confirm-changeset
