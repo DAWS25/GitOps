@@ -1,9 +1,0 @@
-template-file-path: git-sync/020-IncPerm/010-vpc-services/010-vpc-vrnat.cform.yaml
-
-TenantId: IncPerm
-
-parameters: 
-    TenantId: IncPerm
-
-tags:
-    TenantId: IncPerm

@@ -1,4 +1,4 @@
-template-file-path: git-sync/030-Presence/015-dns-delegation.cform.yaml
+template-file-path: git-sync/100-IncPerm/300-Presence/010-DNS/015-dns-delegation.cform.yaml
 
 parameters: 
     TenantId: Presence
