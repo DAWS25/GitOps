@@ -1,3 +1,4 @@
+Description: Route53 delegation for custom domain
 
 Parameters:
   TenantId:

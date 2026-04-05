@@ -1,3 +1,4 @@
+Description: Route53 hosted zone for custom domain
 
 Parameters:
   TenantId:

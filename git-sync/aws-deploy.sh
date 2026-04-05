@@ -223,14 +223,25 @@ process_stack_file() {
 		return 0
 	fi
 
-	local stack_name template_path
+	local stack_name template_path hook_base
 	stack_name="$(stack_name_from_file "${file}")"
 	template_path="$(yaml_value "${file}" "template-file-path")"
+	hook_base="${file%.stack.yaml}"
+
+	if [[ -f "${hook_base}.before.sh" ]]; then
+		log "HOOK  before ${stack_name}"
+		bash "${hook_base}.before.sh" "${stack_name}" "${file}"
+	fi
 
 	local action
 	action="$(deploy_stack "${stack_name}" "${template_path}" "${file}")"
 	wait_for_stack "${stack_name}"
 	ensure_sync_config "${stack_name}" "${rel_path}"
+
+	if [[ -f "${hook_base}.after.sh" ]]; then
+		log "HOOK  after ${stack_name}"
+		bash "${hook_base}.after.sh" "${stack_name}" "${file}"
+	fi
 
 	local status sha_short="n/a"
 	status="$(stack_status "${stack_name}")"

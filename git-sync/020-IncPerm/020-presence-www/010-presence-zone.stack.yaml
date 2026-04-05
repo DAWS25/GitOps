@@ -1,4 +1,4 @@
-template-file-path: git-sync/020-IncPerm/030-Presence/010-presence-dns/dns-zone.cform.yaml
+template-file-path: git-sync/020-IncPerm/020-presence-www/010-dns-zone.cform.yaml
 
 parameters: 
     TenantId: IncPerm
