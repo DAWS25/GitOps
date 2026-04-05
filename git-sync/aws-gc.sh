@@ -3,31 +3,16 @@ set -euo pipefail
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]:-$0}" )" && pwd )"
 
-log() {
-	echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*"
-}
-
-# Extract a scalar value from a simple YAML file
-yaml_value() {
-	local file="$1" key="$2"
-	awk -F: -v k="$key" '
-		$1 ~ "^[[:space:]]*" k "[[:space:]]*$" {
-			sub(/^[[:space:]]+/, "", $2); sub(/[[:space:]]+$/, "", $2)
-			gsub(/^"|"$|^'"'"'|'"'"'$/, "", $2)
-			print $2; exit
-		}
-	' "$file"
-}
+# shellcheck source=aws-lib.sh
+source "${DIR}/aws-lib.sh"
 
 # Build a sorted list of stack names derived from *.stack.yaml files in git-sync/
 build_managed_names() {
-	local file tenant env root
+	local file name
 	find "${DIR}" -type f -name '*.stack.yaml' | sort | while IFS= read -r file; do
-		tenant="$(yaml_value "${file}" "TenantId")"
-		env="$(yaml_value "${file}" "EnvId")"
-		[[ -z "${tenant}" || -z "${env}" ]] && continue
-		root="$(basename "${file%%.*}")"
-		echo "${tenant}-${env}-${root}"
+		name="$(stack_name_from_file "${file}")"
+		[[ -z "${name}" || "${name}" == "-" ]] && continue
+		echo "${name}"
 	done | sort -u
 }
 

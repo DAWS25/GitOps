@@ -5,12 +5,12 @@ Description: CodeBuild role for script runner
 Parameters:
   TenantId:
     Type: String
-    Default: main-tenant
+    Default: GitOps
     Description: Tenant ID for shared resources (e.g. VPC, DB)
 
   EnvId:
     Type: String
-    Default: main-env
+    Default: Main
     Description: Environment ID for deployment (e.g. blue, green)
 
   ManagedPolicyArn:

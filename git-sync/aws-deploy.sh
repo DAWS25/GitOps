@@ -4,6 +4,9 @@ set -euo pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]:-$0}" )" && pwd )"
 REPO_ROOT="$(cd "${DIR}/.." && pwd)"
 
+# shellcheck source=aws-lib.sh
+source "${DIR}/aws-lib.sh"
+
 BASE_DIR="${DIR}"
 BRANCH="${GIT_SYNC_BRANCH:-main}"
 REPOSITORY_LINK_ID="${REPOSITORY_LINK_ID:-}"
@@ -11,10 +14,6 @@ ROLE_ARN="${GIT_SYNC_ROLE_ARN:-}"
 SLEEP_BETWEEN_STACKS_SECONDS=2
 _SUMMARY=()
 _LAST_ACTION=""
-
-log() {
-	echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*"
-}
 
 load_repo_envrc() {
 	local envrc_path="${REPO_ROOT}/.envrc"
@@ -86,29 +85,6 @@ to_repo_relative_path() {
 	local abs="$1"
 	local prefix="${REPO_ROOT}/"
 	echo "${abs#${prefix}}"
-}
-
-stack_root_name() {
-	local file="$1"
-	local base
-	base="$(basename "${file}")"
-	echo "${base%%.*}"
-}
-
-yaml_value() {
-	local file="$1"
-	local key="$2"
-	awk -F: -v k="$key" '
-		$1 ~ "^[[:space:]]*" k "[[:space:]]*$" {
-			sub(/^[[:space:]]+/, "", $2)
-			sub(/[[:space:]]+$/, "", $2)
-			gsub(/^"|"$/, "", $2)
-			gsub(/^'"'"'|'"'"'$/, "", $2)
-			gsub(/\r/, "", $2)
-			print $2
-			exit
-		}
-	' "$file"
 }
 
 yaml_section_key_values() {
@@ -184,6 +160,10 @@ wait_for_stack_success() {
 				log "READY stack=${stack_name} status=${status}"
 				return 0
 				;;
+			DELETE_COMPLETE|DELETE_IN_PROGRESS|ROLLBACK_COMPLETE|ROLLBACK_IN_PROGRESS|UPDATE_ROLLBACK_COMPLETE)
+				log "ERROR stack=${stack_name} status=${status} (stack was deleted or rolled back)"
+				return 1
+				;;
 			*_IN_PROGRESS|REVIEW_IN_PROGRESS|UPDATE_COMPLETE_CLEANUP_IN_PROGRESS|UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS)
 				log "WAIT  stack=${stack_name} status=${status} check=${check}/${max_checks}"
 				sleep 10
@@ -227,7 +207,37 @@ deploy_stack() {
 	local current_hash
 	current_hash="$(file_sha256 "${REPO_ROOT}/${template_path}")"
 
-	if stack_exists "${stack_name}" && [[ -f "${sha256_file}" ]]; then
+	local _live_status
+	_live_status="$(stack_status "${stack_name}")"
+
+	# If stack is in a delete/rollback terminal state, clear sha cache so we redeploy
+	case "${_live_status}" in
+		DELETE_COMPLETE|DELETE_IN_PROGRESS|ROLLBACK_COMPLETE|"")
+			rm -f "${sha256_file}"
+			;;
+	esac
+
+	# Wait for in-progress deletion to finish before attempting deploy
+	if [[ "${_live_status}" == "DELETE_IN_PROGRESS" ]]; then
+		log "WAIT  stack=${stack_name} DELETE_IN_PROGRESS — waiting before redeploy"
+		while [[ "${_live_status}" == "DELETE_IN_PROGRESS" ]]; do
+			sleep 5
+			_live_status="$(stack_status "${stack_name}")"
+		done
+	fi
+
+	# If ROLLBACK_COMPLETE, delete it so we can recreate
+	if [[ "${_live_status}" == "ROLLBACK_COMPLETE" ]]; then
+		log "DELETE stack=${stack_name} ROLLBACK_COMPLETE — deleting before redeploy"
+		aws cloudformation delete-stack --stack-name "${stack_name}"
+		while [[ -n "$(stack_status "${stack_name}")" ]]; do
+			sleep 5
+		done
+		_live_status=""
+	fi
+
+	if [[ "${_live_status}" != "DELETE_COMPLETE" && "${_live_status}" != "" ]] && \
+	   [[ -f "${sha256_file}" ]]; then
 		local stored_hash
 		stored_hash="$(cat "${sha256_file}")"
 		if [[ "${current_hash}" == "${stored_hash}" ]]; then
@@ -238,7 +248,15 @@ deploy_stack() {
 	fi
 
 	while IFS= read -r kv; do
-		[[ -n "${kv}" ]] && param_overrides+=("${kv}")
+		if [[ -n "${kv}" ]]; then
+			local _key="${kv%%=*}" _val="${kv#*=}"
+			# Expand ${VAR} tokens from environment (e.g. GitHubToken: ${GITHUB_TOKEN})
+			if [[ "${_val}" =~ ^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$ ]]; then
+				local _var_name="${BASH_REMATCH[1]}"
+				_val="${!_var_name:-${_val}}"
+			fi
+			param_overrides+=("${_key}=${_val}")
+		fi
 	done < <(yaml_section_key_values "${stack_file}" "parameters")
 
 	while IFS= read -r kv; do

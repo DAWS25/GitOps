@@ -59,6 +59,11 @@ Parameters:
     Default: aws/codebuild/standard:5.0
     Description: Custom Docker image URI (e.g. ECR image)
 
+  ServiceRoleExport:
+    Type: String
+    Default: codebuild-general-role-arn
+    Description: CloudFormation export name for the CodeBuild service role ARN
+
   GitHubTokenSecret:
     Type: String
     Default: GITHUB_TOKEN
@@ -74,39 +79,36 @@ Parameters:
     Default: project
     Description: Project name for the environment deployment
 
+  GitOpsVpcName:
+    Type: String
+    Default: gitops-vpc
+    Description: Name of the GitOps VPC stack (used to import exported values)
+
   TenantId:
     Type: String
-    Default: GitOps
+    Default: presence-env
     Description: Tenant ID for shared account-level resources (VPC, DB)
 
-  EnvId:
+  NixEfsName:
     Type: String
-    Default: Main
-    Description: Environment ID
+    Default: nix-efs
+    Description: Name of the Nix EFS stack (used to import exported values)
 
 Resources:
-  GitHubSourceCredential:
-    Type: AWS::CodeBuild::SourceCredential
-    Properties:
-      AuthType: PERSONAL_ACCESS_TOKEN
-      ServerType: GITHUB
-      Token: !Sub "{{resolve:secretsmanager:${GitHubTokenSecret}}}"
-
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
-    DependsOn: GitHubSourceCredential
     Properties:
       Name: !Ref ProjectName
       Description: !Sub "${ProjectName} build project"
       ServiceRole:
-        Fn::ImportValue: !Sub ${TenantId}-${EnvId}-BuildRunnerRoleArn
+        Fn::ImportValue: !Ref ServiceRoleExport
       Artifacts:
         Type: NO_ARTIFACTS
       Environment:
         Type: LINUX_CONTAINER
         ComputeType: !Ref ComputeType
         Image: !Ref BuildImage
-        ImagePullCredentialsType: CODEBUILD
+        ImagePullCredentialsType: SERVICE_ROLE
         PrivilegedMode: true
         EnvironmentVariables:
           - Name: ENV_GRADE
@@ -132,6 +134,22 @@ Resources:
       SecondarySourceVersions:
         - SourceIdentifier: GitOps_Secrets
           SourceVersion: !Ref SourceBranch
+      VpcConfig:
+        VpcId:
+          Fn::ImportValue: !Sub "${GitOpsVpcName}-id"
+        Subnets:
+          - Fn::ImportValue: !Sub "${GitOpsVpcName}-private-id"
+        SecurityGroupIds:
+          - Fn::ImportValue: !Sub "${NixEfsName}-sg-id"
+      FileSystemLocations:
+        - Type: EFS
+          Location: !Sub
+            - "${FileSystemId}.efs.${AWS::Region}.amazonaws.com:/"
+            - FileSystemId:
+                Fn::ImportValue: !Sub "${NixEfsName}-id"
+          MountPoint: /nix
+          Identifier: nix_cache
+          MountOptions: nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport
       Cache:
         Type: LOCAL
         Modes:
