@@ -2,7 +2,7 @@
 # Source this file; do not execute directly.
 
 log() {
-	echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*"
+	echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*" >&2
 }
 
 # Extract a scalar value from a simple YAML file
