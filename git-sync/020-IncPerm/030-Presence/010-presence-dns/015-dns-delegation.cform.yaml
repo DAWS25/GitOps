@@ -1,3 +1,4 @@
+AWSTemplateFormatVersion: '2010-09-09'
 Description: Route53 delegation for custom domain
 
 Parameters:
@@ -24,5 +25,7 @@ Resources:
       Name: !Ref DomainName
       Type: NS
       TTL: '300'
-      ResourceRecords: 
-        Fn::Split: [",", Fn::ImportValue: !Sub "${TenantId}-NameServers"]
+      ResourceRecords:
+        Fn::Split:
+          - ","
+          - Fn::ImportValue: !Sub "${TenantId}-NameServers"

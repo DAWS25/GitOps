@@ -1,8 +1,10 @@
 template-file-path: git-sync/020-IncPerm/020-presence-www/020-db-cluster.cform.yaml
 
-parameters: 
+TenantId: IncPerm
+EnvId: Presence
+
+parameters:
     TenantId: IncPerm
-    EnvId: Presence
 
 tags:
     TenantId: IncPerm
