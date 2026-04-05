@@ -2,14 +2,11 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]:-$0}" )" && pwd )"
 REPO_ROOT="$(cd "${DIR}/../../../.." && pwd )"
 
-echo "###################################"
-echo "HELLO FROM THE PRESENCE WEBAPP HOOK"
-echo "REPO_ROOT=${REPO_ROOT}"
-echo "###################################"
+echo "Starting Presence web app hook..."
 
 # Verify that the module is initialized
-TENANT_ID="IncPerm"
-ENV_ID="Presence"
+TENANT_ID="Presence"
+ENV_ID="Main"
 MODULE_DIR="${REPO_ROOT}/modules/Presence"
 
 # Iniialize git submodule or pull the module to main branch
@@ -34,7 +31,7 @@ popd
 # Upload the webapp assets to S3
 pushd "${MODULE_DIR}/presence_web/target"
 echo "Uploading Presence web app..."
-BUCKET_STACK_NAME="IncPerm-Presence-Web-bucket-webapp"
+BUCKET_STACK_NAME="${TENANT_ID}-bucket-webapp"
 BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name "${BUCKET_STACK_NAME}" --query "Stacks[0].Outputs[?OutputKey=='WebAppBucketName'].OutputValue" --output text)
 aws s3 sync . "s3://${BUCKET_NAME}" --delete
 popd
@@ -42,7 +39,7 @@ popd
 # Deploy SAM 
 pushd "${MODULE_DIR}/presence_sam/"
 echo "Deploying Presence SAM webapp..."
-SAM_STACK_NAME="IncPerm-Presence-Web-sam-fn"
+SAM_STACK_NAME="${TENANT_ID}-${ENV_ID}-Web-sam-fn"
 APP_VERSION=$(date -u +"%Y%m%d-%H%M%S")
 GIT_COMMIT=$(git -C "$DIR" rev-parse --short HEAD 2>/dev/null || echo "unknown")
 sam deploy --template-file template.yaml \
@@ -57,7 +54,7 @@ sam deploy --template-file template.yaml \
 popd
 
 pushd $MODULE_DIR/presence_edge_auth
-SAM_STACK_NAME="IncPerm-Presence-Web-edge-auth"
+SAM_STACK_NAME="${TENANT_ID}-${ENV_ID}-Web-edge-auth"
 echo "Deploying Presence Lambda@Edge auth function..."
 sam deploy \
     --stack-name "${SAM_STACK_NAME}" \
@@ -70,7 +67,7 @@ echo "✓ Lambda@Edge auth function deployed"
 popd
 
 pushd $MODULE_DIR/presence_edge_cors
-SAM_STACK_NAME="IncPerm-Presence-Web-edge-cors"
+SAM_STACK_NAME="${TENANT_ID}-${ENV_ID}-Edge-CORS"
 echo "Deploying Presence Lambda@Edge CORS function..."
 sam deploy \
     --stack-name "${SAM_STACK_NAME}" \
@@ -84,7 +81,7 @@ echo "✓ Lambda@Edge CORS function deployed"
 
 pushd $MODULE_DIR/presence_edge_hc
 echo "Deploying Presence Lambda@Edge healthcheck function..."
-SAM_STACK_NAME="IncPerm-Presence-Web-edge-hc"
+SAM_STACK_NAME="${TENANT_ID}-${ENV_ID}-Edge-Health"
 sam deploy \
     --stack-name "${SAM_STACK_NAME}" \
     --resolve-s3 \
@@ -96,7 +93,7 @@ popd
 echo "✓ Lambda@Edge healthcheck function deployed"
 
 pushd $MODULE_DIR/presence_edge_root
-SAM_STACK_NAME="IncPerm-Presence-Web-edge-root"
+SAM_STACK_NAME="${TENANT_ID}-${ENV_ID}-Edge-Root"
 echo "Deploying Presence Lambda@Edge root redirect function..."
 sam deploy \
     --stack-name "${SAM_STACK_NAME}" \
