@@ -5,6 +5,11 @@ Parameters:
   TenantId:
     Type: String
     Default: main
+  
+  VPCTenantId:
+    Type: String
+    Default: vpc-tenant
+    Description: Tenant ID for VPC and subnet resources
 
   DatabaseName:
     Type: String
@@ -49,7 +54,7 @@ Resources:
       SubnetIds:
         Fn::Split:
           - ","
-          - Fn::ImportValue: !Sub "${TenantId}-IsolatedSubnetIds"
+          - Fn::ImportValue: !Sub "${VPCTenantId}-IsolatedSubnetIds"
       Tags:
         - Key: Name
           Value: !Sub "${TenantId}-db-subnet-group"
@@ -61,7 +66,7 @@ Resources:
       GroupName: !Sub "${TenantId}-db-security-group"
       GroupDescription: !Sub "Security group for Aurora cluster"
       VpcId:
-        Fn::ImportValue: !Sub "${TenantId}-VpcId"
+        Fn::ImportValue: !Sub "${VPCTenantId}-VpcId"
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 5432
