@@ -149,7 +149,7 @@ deploy_stack() {
 
 	local action="created"
 	[[ -n "${status}" && "${status}" != "DELETE_COMPLETE" ]] && action="updated"
-	log "${action^^} ${stack_name}"
+	log "$(echo "${action}" | tr '[:lower:]' '[:upper:]') ${stack_name}"
 
 	local -a cmd=(
 		aws cloudformation deploy
