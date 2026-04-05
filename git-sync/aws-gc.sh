@@ -42,22 +42,18 @@ empty_bucket() {
 	done
 }
 
-# For a given stack, find any output values that are S3 bucket names and empty them
+# For a given stack, find any S3::Bucket resources and empty them
 empty_stack_buckets() {
 	local stack_name="$1"
-	local buckets bucket
+	local bucket
 
-	buckets="$(aws cloudformation describe-stacks \
+	while IFS= read -r bucket; do
+		[[ -z "${bucket}" ]] && continue
+		empty_bucket "${bucket}"
+	done < <(aws cloudformation list-stack-resources \
 		--stack-name "${stack_name}" \
-		--query 'Stacks[0].Outputs[].OutputValue' \
-		--output text 2>/dev/null || true)"
-
-	for bucket in ${buckets}; do
-		# Check if the output value is actually an existing S3 bucket
-		if aws s3api head-bucket --bucket "${bucket}" 2>/dev/null; then
-			empty_bucket "${bucket}"
-		fi
-	done
+		--query "StackResourceSummaries[?ResourceType=='AWS::S3::Bucket'].PhysicalResourceId" \
+		--output text 2>/dev/null | tr '\t' '\n' | grep -v '^$' || true)
 }
 
 # Delete all stacks currently in ROLLBACK_COMPLETE
