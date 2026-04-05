@@ -230,17 +230,29 @@ process_stack_file() {
 
 	if [[ -f "${hook_base}.before.sh" ]]; then
 		log "HOOK  before ${stack_name}"
-		bash "${hook_base}.before.sh" "${stack_name}" "${file}"
+		bash "${hook_base}.before.sh" "${stack_name}" "${file}" || {
+			log "FATAL  ${stack_name}: before hook failed (exit $?)"
+			exit 1
+		}
 	fi
 
 	local action
-	action="$(deploy_stack "${stack_name}" "${template_path}" "${file}")"
-	wait_for_stack "${stack_name}"
+	action="$(deploy_stack "${stack_name}" "${template_path}" "${file}")" || {
+		log "FATAL  ${stack_name}: deploy failed"
+		exit 1
+	}
+	wait_for_stack "${stack_name}" || {
+		log "FATAL  ${stack_name}: stack did not reach a ready state"
+		exit 1
+	}
 	ensure_sync_config "${stack_name}" "${rel_path}"
 
 	if [[ -f "${hook_base}.after.sh" ]]; then
 		log "HOOK  after ${stack_name}"
-		bash "${hook_base}.after.sh" "${stack_name}" "${file}"
+		bash "${hook_base}.after.sh" "${stack_name}" "${file}" || {
+			log "FATAL  ${stack_name}: after hook failed (exit $?)"
+			exit 1
+		}
 	fi
 
 	local status sha_short="n/a"
