@@ -98,6 +98,8 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Enable HTTP and SSH access
+      VpcId:
+        Fn::ImportValue: !Sub ${TenantId}-${EnvId}-VpcId
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: !Ref K3sPort
@@ -276,7 +278,10 @@ Resources:
       LaunchTemplate:
         LaunchTemplateId: !Ref LaunchTemplate
         Version: !GetAtt LaunchTemplate.LatestVersionNumber
-      AvailabilityZones: !GetAZs ""
+      VPCZoneIdentifier: !Split
+        - ","
+        - !ImportValue
+            Fn::Sub: ${TenantId}-${EnvId}-PublicSubnetIds
       Tags:
         - Key: Name
           Value: !Ref InstanceName

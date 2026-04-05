@@ -45,5 +45,9 @@ stack_name_from_file() {
 	tenant_id="$(yaml_value "${file}" "TenantId")"
 	env_id="$(yaml_value "${file}" "EnvId")"
 	root_name="$(stack_root_name "${file}")"
-	echo "${tenant_id}-${env_id}-${root_name}"
+	if [[ -n "${env_id}" ]]; then
+		echo "${tenant_id}-${env_id}-${root_name}"
+	else
+		echo "${tenant_id}-${root_name}"
+	fi
 }

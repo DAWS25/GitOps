@@ -1,4 +1,4 @@
-Description: Remote admin security group with SSH access.
+Description: VPC security group allowing remote admin access
 
 Parameters:
   TenantId:
@@ -13,7 +13,6 @@ Parameters:
     Type: String
     Default: 0.0.0.0/0
     Description: CIDR block allowed to access the admin security group over SSH
-  
 
 Resources:
 
@@ -21,6 +20,8 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Enable SSH access
+      VpcId:
+        Fn::ImportValue: !Sub ${TenantId}-${EnvId}-VpcId
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22

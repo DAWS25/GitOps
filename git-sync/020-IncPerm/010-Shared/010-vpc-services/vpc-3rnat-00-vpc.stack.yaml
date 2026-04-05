@@ -1,9 +1,0 @@
-template-file-path: git-sync/020-IncPerm/010-Shared/010-vpc-services/vpc-3rnat-00-vpc.cform.yaml
-
-parameters: 
-    TenantId: IncPerm
-    EnvId: Shared
-
-tags:
-    TenantId: IncPerm
-    EnvId: Shared

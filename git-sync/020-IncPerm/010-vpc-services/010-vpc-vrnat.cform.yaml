@@ -3,11 +3,7 @@ Description: VPC networking for High-Availability (3 AZs) - Public and Isolated 
 Parameters:
   TenantId:
     Type: String
-    Default: main
-  
-  EnvId:
-    Type: String
-    Default: main
+    Default: IncPerm
 
   VpcCidr:
     Type: String
@@ -46,22 +42,18 @@ Resources:
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: !Sub ${TenantId}-${EnvId}-vpc-services
+          Value: !Sub ${TenantId}-vpc-services
         - Key: TenantId
           Value: !Sub ${TenantId}
-        - Key: EnvId
-          Value: !Sub ${EnvId}
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
         - Key: Name
-          Value: !Sub ${TenantId}-${EnvId}-igw
+          Value: !Sub ${TenantId}-igw
         - Key: TenantId
           Value: !Sub ${TenantId}
-        - Key: EnvId
-          Value: !Sub ${EnvId}
 
   VPCGatewayAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
@@ -75,11 +67,9 @@ Resources:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: !Sub ${TenantId}-${EnvId}-public-rt
+          Value: !Sub ${TenantId}-public-rt
         - Key: TenantId
           Value: !Sub ${TenantId}
-        - Key: EnvId
-          Value: !Sub ${EnvId}
 
   PublicDefaultRoute:
     Type: AWS::EC2::Route
@@ -95,13 +85,11 @@ Resources:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: !Sub ${TenantId}-${EnvId}-isolated-rt
+          Value: !Sub ${TenantId}-isolated-rt
         - Key: Isolation
           Value: isolated
         - Key: TenantId
           Value: !Sub ${TenantId}
-        - Key: EnvId
-          Value: !Sub ${EnvId}
 
   PublicSubnet1:
     Type: AWS::EC2::Subnet
@@ -112,13 +100,11 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub ${TenantId}-${EnvId}-public-a
+          Value: !Sub ${TenantId}-public-a
         - Key: Tier
           Value: public
         - Key: TenantId
           Value: !Sub ${TenantId}
-        - Key: EnvId
-          Value: !Sub ${EnvId}
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
@@ -129,13 +115,11 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub ${TenantId}-${EnvId}-public-b
+          Value: !Sub ${TenantId}-public-b
         - Key: Tier
           Value: public
         - Key: TenantId
           Value: !Sub ${TenantId}
-        - Key: EnvId
-          Value: !Sub ${EnvId}
 
   PublicSubnet3:
     Type: AWS::EC2::Subnet
@@ -146,13 +130,11 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub ${TenantId}-${EnvId}-public-c
+          Value: !Sub ${TenantId}-public-c
         - Key: Tier
           Value: public
         - Key: TenantId
           Value: !Sub ${TenantId}
-        - Key: EnvId
-          Value: !Sub ${EnvId}
 
   IsolatedSubnet1:
     Type: AWS::EC2::Subnet
@@ -163,11 +145,9 @@ Resources:
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub ${TenantId}-${EnvId}-isolated-a
+          Value: !Sub ${TenantId}-isolated-a
         - Key: TenantId
           Value: !Sub ${TenantId}
-        - Key: EnvId
-          Value: !Sub ${EnvId}
 
   IsolatedSubnet2:
     Type: AWS::EC2::Subnet
@@ -178,11 +158,9 @@ Resources:
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub ${TenantId}-${EnvId}-isolated-b
+          Value: !Sub ${TenantId}-isolated-b
         - Key: TenantId
           Value: !Sub ${TenantId}
-        - Key: EnvId
-          Value: !Sub ${EnvId}
 
   IsolatedSubnet3:
     Type: AWS::EC2::Subnet
@@ -193,11 +171,9 @@ Resources:
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub ${TenantId}-${EnvId}-isolated-c
+          Value: !Sub ${TenantId}-isolated-c
         - Key: TenantId
           Value: !Sub ${TenantId}
-        - Key: EnvId
-          Value: !Sub ${EnvId}
 
   AssocPublicSubnet1:
     Type: AWS::EC2::SubnetRouteTableAssociation
@@ -235,28 +211,28 @@ Outputs:
   VpcId:
     Value: !Ref VPC
     Export:
-      Name: !Sub ${TenantId}-${EnvId}-VpcId
+      Name: !Sub ${TenantId}-VpcId
 
   InternetGatewayId:
     Value: !Ref InternetGateway
     Export:
-      Name: !Sub ${TenantId}-${EnvId}-InternetGatewayId
+      Name: !Sub ${TenantId}-InternetGatewayId
 
   PublicRouteTableId:
     Value: !Ref PublicRouteTable
     Export:
-      Name: !Sub ${TenantId}-${EnvId}-PublicRouteTableId
+      Name: !Sub ${TenantId}-PublicRouteTableId
 
   IsolatedRouteTableId:
     Value: !Ref IsolatedRouteTable
     Export:
-      Name: !Sub ${TenantId}-${EnvId}-IsolatedRouteTableId
+      Name: !Sub ${TenantId}-IsolatedRouteTableId
 
   PublicSubnetIds:
     Value:
       !Join [",", [!Ref PublicSubnet1, !Ref PublicSubnet2, !Ref PublicSubnet3]]
     Export:
-      Name: !Sub ${TenantId}-${EnvId}-PublicSubnetIds
+      Name: !Sub ${TenantId}-PublicSubnetIds
 
   IsolatedSubnetIds:
     Value:
@@ -265,30 +241,30 @@ Outputs:
         [!Ref IsolatedSubnet1, !Ref IsolatedSubnet2, !Ref IsolatedSubnet3],
       ]
     Export:
-      Name: !Sub ${TenantId}-${EnvId}-IsolatedSubnetIds
+      Name: !Sub ${TenantId}-IsolatedSubnetIds
 
   PublicSubnet1Id:
     Value: !Ref PublicSubnet1
     Export:
-      Name: !Sub ${TenantId}-${EnvId}-PublicSubnet1Id
+      Name: !Sub ${TenantId}-PublicSubnet1Id
   PublicSubnet2Id:
     Value: !Ref PublicSubnet2
     Export:
-      Name: !Sub ${TenantId}-${EnvId}-PublicSubnet2Id
+      Name: !Sub ${TenantId}-PublicSubnet2Id
   PublicSubnet3Id:
     Value: !Ref PublicSubnet3
     Export:
-      Name: !Sub ${TenantId}-${EnvId}-PublicSubnet3Id
+      Name: !Sub ${TenantId}-PublicSubnet3Id
 
   IsolatedSubnet1Id:
     Value: !Ref IsolatedSubnet1
     Export:
-      Name: !Sub ${TenantId}-${EnvId}-IsolatedSubnet1Id
+      Name: !Sub ${TenantId}-IsolatedSubnet1Id
   IsolatedSubnet2Id:
     Value: !Ref IsolatedSubnet2
     Export:
-      Name: !Sub ${TenantId}-${EnvId}-IsolatedSubnet2Id
+      Name: !Sub ${TenantId}-IsolatedSubnet2Id
   IsolatedSubnet3Id:
     Value: !Ref IsolatedSubnet3
     Export:
-      Name: !Sub ${TenantId}-${EnvId}-IsolatedSubnet3Id
+      Name: !Sub ${TenantId}-IsolatedSubnet3Id

@@ -215,12 +215,11 @@ process_stack_file() {
 	local file="$1"
 	local rel_path="${file#${REPO_ROOT}/}"
 
-	local tenant_id env_id
+	local tenant_id
 	tenant_id="$(yaml_value "${file}" "TenantId")"
-	env_id="$(yaml_value "${file}" "EnvId")"
 
-	if [[ -z "${tenant_id}" || -z "${env_id}" ]]; then
-		log "SKIP  ${rel_path} (missing TenantId or EnvId)"
+	if [[ -z "${tenant_id}" ]]; then
+		log "SKIP  ${rel_path} (missing TenantId)"
 		return 0
 	fi
 
