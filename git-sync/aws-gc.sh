@@ -6,14 +6,18 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]:-$0}" )" && pwd )"
 # shellcheck source=aws-lib.sh
 source "${DIR}/aws-lib.sh"
 
-# Build a sorted list of stack names derived from *.stack.yaml files in git-sync/
+# Build a sorted list of stack names derived from *.stack.yaml and *.extra-stacks.txt files in git-sync/
 build_managed_names() {
 	local file name
 	find "${DIR}" -type f -name '*.stack.yaml' | sort | while IFS= read -r file; do
 		name="$(stack_name_from_file "${file}")"
 		[[ -z "${name}" || "${name}" == "-" ]] && continue
 		echo "${name}"
-	done | sort -u
+	done
+	# Also include any hook-created stacks registered in *.extra-stacks.txt sidecar files
+	find "${DIR}" -type f -name '*.extra-stacks.txt' | sort | while IFS= read -r file; do
+		grep -v '^\s*#' "${file}" | grep -v '^\s*$' || true
+	done
 }
 
 # Empty an S3 bucket: policy, all versions, delete markers, and objects
@@ -112,7 +116,7 @@ main() {
 	managed_file="$(mktemp)"
 	trap 'rm -f "${managed_file}"' EXIT
 
-	build_managed_names > "${managed_file}"
+	build_managed_names | sort -u > "${managed_file}"
 	log "Managed stacks: $(wc -l < "${managed_file}" | tr -d ' ')"
 
 	delete_rollback_complete
