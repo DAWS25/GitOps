@@ -37,3 +37,17 @@ BUCKET_STACK_NAME="IncPerm-Presence-Web-bucket-webapp"
 BUCKET_NAME=$(aws cloudformation describe-stacks --stack-name "${BUCKET_STACK_NAME}" --query "Stacks[0].Outputs[?OutputKey=='WebAppBucketName'].OutputValue" --output text)
 aws s3 sync . "s3://${BUCKET_NAME}" --delete
 popd
+
+# Deploy SAM 
+pushd "${MODULE_DIR}/presence_sam/"
+echo "Deploying Presence SAM app..."
+SAM_STACK_NAME="IncPerm-Presence-Web-sam"
+sam deploy --template-file template.yaml \
+    --stack-name "${SAM_STACK_NAME}" \
+    --capabilities CAPABILITY_NAMED_IAM \
+    --resolve-s3 \
+    --parameter-overrides \
+        TenantId=IncPerm EnvId=Presence
+popd
+
+echo "PRESENCE WEBAPP HOOK COMPLETE"

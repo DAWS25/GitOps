@@ -21,6 +21,12 @@ Resources:
         Comment: !Sub "Hosted zone for ${DomainName}"
 
 Outputs:
+  DomainName:
+    Description: Custom domain name for the hosted zone
+    Value: !Ref DomainName
+    Export:
+      Name: !Sub "${TenantId}-DomainName"
+
   ZoneId:
     Description: Hosted Zone ID for the custom domain
     Value: !Ref HostedZone
@@ -32,3 +38,22 @@ Outputs:
     Value: !Join [",", !GetAtt HostedZone.NameServers]
     Export:
       Name: !Sub "${TenantId}-NameServers"
+
+
+  URL:
+    Description: Primary URL
+    Value: !Sub "https://${DomainName}"
+    Export:
+      Name: !Sub "${TenantId}-CertificateURL"
+
+  HealthCheckURL:
+    Description: Health check URL
+    Value: !Sub "https://${DomainName}/health"
+    Export:
+      Name: !Sub "${TenantId}-CertificateHealthCheckURL"
+
+  HealthCheckCmd:
+    Description: Health check command
+    Value: !Sub "curl -kv https://${DomainName}/health"
+    Export:
+      Name: !Sub "${TenantId}-CertificateHealthCheckCmd"
