@@ -9,7 +9,7 @@ Parameters:
 
   EnvId:
     Type: String
-    Default: main
+    Default: Main
     Description: Environment identifier used to prefix exported outputs.
 
 Resources:
