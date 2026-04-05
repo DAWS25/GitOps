@@ -31,29 +31,27 @@ Outputs:
     Description: Hosted Zone ID for the custom domain
     Value: !Ref HostedZone
     Export:
-      Name: !Sub "${TenantId}-HostedZoneId"
+      Name: !Sub "${TenantId}-ZoneId"
 
   NameServers:
     Description: Name server list for the hosted zone (comma-separated)
     Value: !Join [",", !GetAtt HostedZone.NameServers]
     Export:
       Name: !Sub "${TenantId}-NameServers"
-
-
   URL:
     Description: Primary URL
     Value: !Sub "https://${DomainName}"
     Export:
-      Name: !Sub "${TenantId}-CertificateURL"
+      Name: !Sub "${TenantId}-URL"
 
-  HealthCheckURL:
+  HealthURL:
     Description: Health check URL
     Value: !Sub "https://${DomainName}/health"
     Export:
-      Name: !Sub "${TenantId}-CertificateHealthCheckURL"
+      Name: !Sub "${TenantId}-HealthURL"
 
-  HealthCheckCmd:
+  HealthCmd:
     Description: Health check command
     Value: !Sub "curl -kv https://${DomainName}/health"
     Export:
-      Name: !Sub "${TenantId}-CertificateHealthCheckCmd"
+      Name: !Sub "${TenantId}-HealthCmd"
