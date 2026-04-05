@@ -24,13 +24,6 @@ Resources:
             Fn::ImportValue: !Sub "${TenantId}-DomainName"
           HostedZoneId:
             Fn::ImportValue: !Sub "${TenantId}-ZoneId"
-        - DomainName:
-            Fn::Sub:
-              - "*.${DomainName}"
-              - DomainName:
-                  Fn::ImportValue: !Sub "${TenantId}-DomainName"
-          HostedZoneId:
-            Fn::ImportValue: !Sub "${TenantId}-ZoneId"
       Tags:
         - Key: Name
           Value: !Sub "${TenantId}-certificate"
