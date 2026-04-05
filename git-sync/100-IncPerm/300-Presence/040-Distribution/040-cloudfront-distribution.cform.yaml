@@ -49,10 +49,10 @@ Resources:
           LambdaFunctionAssociations:
             - EventType: viewer-request
               LambdaFunctionARN:
-                Fn::ImportValue: !Sub "${TenantId}-${EnvId}-EdgeRootFunctionVersion"
+                !Sub '{{resolve:ssm:/${TenantId}/${EnvId}/EdgeRootFunctionVersion}}'
             - EventType: origin-response
               LambdaFunctionARN:
-                Fn::ImportValue: !Sub "${TenantId}-${EnvId}-EdgeCorsFunctionVersion"
+                !Sub '{{resolve:ssm:/${TenantId}/${EnvId}/EdgeCorsFunctionVersion}}'
         CacheBehaviors:
           - PathPattern: "/edge/hc/*"
             TargetOriginId: S3Origin
@@ -71,10 +71,10 @@ Resources:
             LambdaFunctionAssociations:
               - EventType: viewer-request
                 LambdaFunctionARN:
-                  Fn::ImportValue: !Sub "${TenantId}-${EnvId}-EdgeHcFunctionVersion"
+                  !Sub '{{resolve:ssm:/${TenantId}/${EnvId}/EdgeHcFunctionVersion}}'
               - EventType: origin-response
                 LambdaFunctionARN:
-                  Fn::ImportValue: !Sub "${TenantId}-${EnvId}-EdgeCorsFunctionVersion"
+                  !Sub '{{resolve:ssm:/${TenantId}/${EnvId}/EdgeCorsFunctionVersion}}'
           - PathPattern: "/app/*"
             TargetOriginId: S3Origin
             ViewerProtocolPolicy: https-only
@@ -92,10 +92,10 @@ Resources:
             LambdaFunctionAssociations:
               - EventType: origin-request
                 LambdaFunctionARN:
-                  Fn::ImportValue: !Sub "${TenantId}-${EnvId}-EdgeFunctionVersion"
+                  !Sub '{{resolve:ssm:/${TenantId}/${EnvId}/EdgeFunctionVersion}}'
               - EventType: origin-response
                 LambdaFunctionARN:
-                  Fn::ImportValue: !Sub "${TenantId}-${EnvId}-EdgeCorsFunctionVersion"
+                  !Sub '{{resolve:ssm:/${TenantId}/${EnvId}/EdgeCorsFunctionVersion}}'
           - PathPattern: "/fn/*"
             TargetOriginId: ApiOrigin
             ViewerProtocolPolicy: https-only

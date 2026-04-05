@@ -55,7 +55,9 @@ sam deploy --template-file template.yaml \
         VPCTenantId=${VPC_TENANT_ID} \
         AppVersion=${APP_VERSION} \
         GitCommit=${GIT_COMMIT}
+aws cloudformation wait stack-update-complete --stack-name "${SAM_STACK_NAME}"
 popd
+echo "✓ Presence SAM webapp deployed"
 
 pushd $MODULE_DIR/presence_edge_auth
 SAM_STACK_NAME="${TENANT_ID}-${ENV_ID}-Web-edge-auth"
@@ -67,6 +69,7 @@ sam deploy \
     --capabilities CAPABILITY_IAM \
     --no-fail-on-empty-changeset \
     --no-confirm-changeset
+aws cloudformation wait stack-update-complete --stack-name "${SAM_STACK_NAME}"
 echo "✓ Lambda@Edge auth function deployed"
 popd
 
@@ -80,6 +83,7 @@ sam deploy \
     --capabilities CAPABILITY_IAM \
     --no-fail-on-empty-changeset \
     --no-confirm-changeset
+aws cloudformation wait stack-update-complete --stack-name "${SAM_STACK_NAME}"
 popd
 echo "✓ Lambda@Edge CORS function deployed"
 
@@ -93,6 +97,7 @@ sam deploy \
     --capabilities CAPABILITY_IAM \
     --no-fail-on-empty-changeset \
     --no-confirm-changeset
+aws cloudformation wait stack-update-complete --stack-name "${SAM_STACK_NAME}"
 popd
 echo "✓ Lambda@Edge healthcheck function deployed"
 
@@ -106,8 +111,11 @@ sam deploy \
     --capabilities CAPABILITY_IAM \
     --no-fail-on-empty-changeset \
     --no-confirm-changeset
+aws cloudformation wait stack-update-complete --stack-name "${SAM_STACK_NAME}"
 popd
 echo "✓ Lambda@Edge root redirect function deployed"
 
+# Invalidate CloudFront SHA256 so it redeploys with updated Lambda@Edge version ARNs from SSM
+rm -f "${REPO_ROOT}/git-sync/100-IncPerm/300-Presence/040-Distribution/040-cloudfront-distribution.cform.sha256.txt"
 
 echo "✓ Presence web app hook completed ✓"
