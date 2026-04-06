@@ -43,7 +43,7 @@ echo "Deploying Presence SAM webapp..."
 SAM_STACK_NAME="${TENANT_ID}-${ENV_ID}-Web-sam-fn"
 APP_VERSION=$(date -u +"%Y%m%d-%H%M%S")
 GIT_COMMIT=$(git -C "$DIR" rev-parse --short HEAD 2>/dev/null || echo "unknown")
-sam deploy --template-file template.yaml \
+sam deploy \
     --stack-name "${SAM_STACK_NAME}" \
     --capabilities CAPABILITY_NAMED_IAM \
     --resolve-s3 \
