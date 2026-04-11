@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: "Static website distribution with S3 bucket, CloudFront distribution, and Origin Access Control"
+Description: "CloudFront distribution with S3 origin, API Gateway origin, and Lambda@Edge"
 
 Parameters:
   TenantId:

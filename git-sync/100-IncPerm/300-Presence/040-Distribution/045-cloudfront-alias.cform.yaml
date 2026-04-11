@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: "Route53 alias record pointing the root domain to the CloudFront distribution"
+Description: "Route53 alias record pointing the domain to the CloudFront distribution"
 
 Parameters:
   TenantId:
@@ -9,7 +9,7 @@ Parameters:
 
   EnvId:
     Type: String
-    Default: env
+    Default: main
     Description: Environment identifier used to prefix exported outputs.
 
 Resources:
