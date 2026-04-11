@@ -1,0 +1,36 @@
+Description: "Route53 health check for edge healthcheck endpoint"
+
+Parameters:
+  TenantId:
+    Type: String
+    Default: tenant
+    Description: Tenant identifier used to prefix exported outputs.
+
+  EnvId:
+    Type: String
+    Default: main
+    Description: Environment identifier used to prefix exported outputs.
+
+Resources:
+  EdgeHealthCheck:
+    Type: AWS::Route53::HealthCheck
+    Properties:
+      HealthCheckConfig:
+        FullyQualifiedDomainName:
+          Fn::ImportValue: !Sub "${TenantId}-DomainName"
+        Port: 443
+        Type: HTTPS
+        ResourcePath: /edge/hc/ready
+        RequestInterval: 30
+        FailureThreshold: 3
+        EnableSNI: true
+      HealthCheckTags:
+        - Key: Name
+          Value: !Sub "${TenantId}-${EnvId}-edge-healthcheck"
+
+Outputs:
+  HealthCheckId:
+    Description: Route53 Health Check ID
+    Value: !Ref EdgeHealthCheck
+    Export:
+      Name: !Sub "${TenantId}-${EnvId}-EdgeHealthCheckId"
