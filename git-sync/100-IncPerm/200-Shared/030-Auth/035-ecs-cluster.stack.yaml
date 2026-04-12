@@ -1,4 +1,4 @@
-template-file-path: git-sync/100-IncPerm/200-Shared/020-Cluster/020-ecs-cluster.cform.yaml
+template-file-path: git-sync/100-IncPerm/200-Shared/030-Auth/035-ecs-cluster.cform.yaml
 
 TenantId: IncPerm
 
