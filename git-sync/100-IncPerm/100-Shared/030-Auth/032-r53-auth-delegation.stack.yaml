@@ -2,6 +2,7 @@ template-file-path: git-sync/000-Modules/HostedZone/dns-delegation.cform.yaml
 
 parameters: 
     TenantId: Auth
+    DomainName: auth.daws25.com
     ParentHostedZoneId: Z03647633PSGP4NGRHD23
 
 tags:
