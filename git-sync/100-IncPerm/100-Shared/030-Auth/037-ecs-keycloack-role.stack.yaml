@@ -1,7 +1,7 @@
 template-file-path: git-sync/100-IncPerm/100-Shared/030-Auth/037-ecs-keycloack-role.cform.yaml
 
 parameters:
-    TenantId: IncPerm
+    TenantId: Auth
 
 tags:
-    TenantId: IncPerm
+    TenantId: Auth

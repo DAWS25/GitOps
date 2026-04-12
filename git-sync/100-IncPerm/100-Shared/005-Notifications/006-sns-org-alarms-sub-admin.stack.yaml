@@ -4,7 +4,7 @@ TenantId: IncPerm
 
 parameters: 
     TenantId: IncPerm
-    Email: julio+daws25@gmail.com
+    Email: ${ADMIN_EMAIL}
 
 tags:
     TenantId: IncPerm

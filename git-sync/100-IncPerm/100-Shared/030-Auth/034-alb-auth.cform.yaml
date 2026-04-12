@@ -15,6 +15,9 @@
 Description: Simple ALB
 
 Parameters:
+  TenantId:
+    Type: String
+    Default: project
   VPCTenantId:
     Type: String
     Default: project
@@ -67,7 +70,7 @@ Resources:
       SslPolicy: ELBSecurityPolicy-2016-08
       Certificates:
         - CertificateArn:
-            Fn::ImportValue: !Sub "${VPCTenantId}-CertificateArn"
+            Fn::ImportValue: !Sub "${TenantId}-CertificateArn"
       DefaultActions:
         - Type: fixed-response
           FixedResponseConfig:

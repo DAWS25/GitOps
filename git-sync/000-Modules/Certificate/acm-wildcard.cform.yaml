@@ -21,7 +21,8 @@ Resources:
       SubjectAlternativeNames:
         - Fn::Sub: 
             - "*.${DomainName}"
-            - DomainName: !ImportValue !Sub "${TenantId}-DomainName"
+            - DomainName:
+                Fn::ImportValue: !Sub "${TenantId}-DomainName"
 
 Outputs:
   CertificateArn:
