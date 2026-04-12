@@ -10,6 +10,8 @@ source "${DIR}/aws-lib.sh"
 BRANCH="${GIT_SYNC_BRANCH:-main}"
 REPOSITORY_LINK_ID="${REPOSITORY_LINK_ID:-}"
 ROLE_ARN="${GIT_SYNC_ROLE_ARN:-}"
+CLOUDFRONT_DISTRIBUTION_IDS="${CLOUDFRONT_DISTRIBUTION_IDS:-}"
+CLOUDFRONT_INVALIDATION_PATHS="${CLOUDFRONT_INVALIDATION_PATHS:-/*}"
 SLEEP_BETWEEN_STACKS=2
 _SUMMARY=()
 
@@ -208,6 +210,34 @@ ensure_sync_config() {
 }
 
 # ─────────────────────────────────────────────────────────────────
+# Optionally invalidate CloudFront distributions after deploy
+# ─────────────────────────────────────────────────────────────────
+
+invalidate_distributions() {
+	local ids="${CLOUDFRONT_DISTRIBUTION_IDS//,/ }"
+	[[ -z "${ids// /}" ]] && {
+		log "CFINV SKIP (CLOUDFRONT_DISTRIBUTION_IDS not set)"
+		return 0
+	}
+
+	local -a paths=()
+	read -r -a paths <<< "${CLOUDFRONT_INVALIDATION_PATHS}"
+	(( ${#paths[@]} > 0 )) || paths=("/*")
+
+	local dist inv_id
+	for dist in ${ids}; do
+		[[ -z "${dist}" ]] && continue
+		log "CFINV CREATE ${dist} (paths: ${paths[*]})"
+		inv_id="$(aws cloudfront create-invalidation \
+			--distribution-id "${dist}" \
+			--paths "${paths[@]}" \
+			--query 'Invalidation.Id' \
+			--output text)"
+		log "CFINV READY ${dist} (id: ${inv_id})"
+	done
+}
+
+# ─────────────────────────────────────────────────────────────────
 # Process one *.stack.yaml file
 # ─────────────────────────────────────────────────────────────────
 
@@ -278,6 +308,8 @@ load_envrc() {
 	BRANCH="${GIT_SYNC_BRANCH:-main}"
 	REPOSITORY_LINK_ID="${REPOSITORY_LINK_ID:-}"
 	ROLE_ARN="${GIT_SYNC_ROLE_ARN:-}"
+	CLOUDFRONT_DISTRIBUTION_IDS="${CLOUDFRONT_DISTRIBUTION_IDS:-}"
+	CLOUDFRONT_INVALIDATION_PATHS="${CLOUDFRONT_INVALIDATION_PATHS:-/*}"
 }
 
 main() {
@@ -287,6 +319,8 @@ main() {
 		echo "Usage: $0 [-h|--help]"
 		echo "  Deploys all *.stack.yaml files under git-sync/ in sorted order."
 		echo "  Env: REPOSITORY_LINK_ID, GIT_SYNC_ROLE_ARN, GIT_SYNC_BRANCH"
+		echo "       CLOUDFRONT_DISTRIBUTION_IDS (optional, comma/space-separated)"
+		echo "       CLOUDFRONT_INVALIDATION_PATHS (optional, default: /*)"
 		exit 0
 	fi
 
@@ -317,6 +351,7 @@ main() {
 	printf '  %-55s  %-8s  %-22s  %s\n' "STACK" "ACTION" "STATUS" "SHA256"
 	printf '  %-55s  %-8s  %-22s  %s\n' "─────" "──────" "──────" "──────"
 	printf '  %s\n' "${_SUMMARY[@]+"${_SUMMARY[@]}"}"
+	invalidate_distributions
 	log "deploy done"
 }
 

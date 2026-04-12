@@ -1,0 +1,279 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ECS Fargate Keycloak service using shared ECS cluster and Aurora PostgreSQL exports
+
+Parameters:
+  TenantId:
+    Type: String
+    Default: main
+    Description: Tenant identifier used to import sibling stack exports.
+
+  VPCTenantId:
+    Type: String
+    Default: vpc-tenant
+    Description: Tenant identifier for shared VPC exports.
+
+  KeycloakImage:
+    Type: String
+    Default: quay.io/keycloak/keycloak:26.1
+    Description: Container image for Keycloak.
+
+  DBMasterUserSecretId:
+    Type: String
+    Description: Secrets Manager secret ID or ARN for DB credentials JSON (username/password).
+
+  KeycloakAdminSecretId:
+    Type: String
+    Description: Secrets Manager secret ID or ARN for Keycloak bootstrap admin credentials JSON.
+
+  KeycloakContainerPort:
+    Type: Number
+    Default: 8080
+    Description: Keycloak HTTP container port.
+
+  DesiredCount:
+    Type: Number
+    Default: 1
+    MinValue: 1
+    Description: Number of running Keycloak tasks.
+
+  TaskCpu:
+    Type: String
+    Default: '1024'
+    AllowedValues: ['256', '512', '1024', '2048', '4096']
+    Description: Fargate task CPU units.
+
+  TaskMemory:
+    Type: String
+    Default: '2048'
+    AllowedValues:
+      - '512'
+      - '1024'
+      - '2048'
+      - '3072'
+      - '4096'
+      - '5120'
+      - '6144'
+      - '7168'
+      - '8192'
+      - '16384'
+      - '30720'
+    Description: Fargate task memory (MiB).
+
+Resources:
+  KeycloakLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/ecs/${TenantId}/keycloak'
+      RetentionInDays: 14
+
+  KeycloakAlbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub '${TenantId} Keycloak ALB security group'
+      VpcId:
+        Fn::ImportValue: !Sub '${VPCTenantId}-VpcId'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: HTTP ingress
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub '${TenantId}-keycloak-alb-sg'
+        - Key: TenantId
+          Value: !Ref TenantId
+
+  KeycloakTaskSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub '${TenantId} Keycloak task security group'
+      VpcId:
+        Fn::ImportValue: !Sub '${VPCTenantId}-VpcId'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref KeycloakContainerPort
+          ToPort: !Ref KeycloakContainerPort
+          SourceSecurityGroupId: !Ref KeycloakAlbSecurityGroup
+          Description: Keycloak traffic from ALB
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub '${TenantId}-keycloak-task-sg'
+        - Key: TenantId
+          Value: !Ref TenantId
+
+  KeycloakLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Type: application
+      Scheme: internet-facing
+      SecurityGroups:
+        - !Ref KeycloakAlbSecurityGroup
+      Subnets:
+        Fn::Split:
+          - ','
+          - Fn::ImportValue: !Sub '${VPCTenantId}-PublicSubnetIds'
+      Tags:
+        - Key: TenantId
+          Value: !Ref TenantId
+
+  KeycloakTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Protocol: HTTP
+      Port: !Ref KeycloakContainerPort
+      TargetType: ip
+      VpcId:
+        Fn::ImportValue: !Sub '${VPCTenantId}-VpcId'
+      HealthCheckEnabled: true
+      HealthCheckProtocol: HTTP
+      HealthCheckPath: /health/ready
+      Matcher:
+        HttpCode: 200-399
+      Tags:
+        - Key: TenantId
+          Value: !Ref TenantId
+
+  KeycloakListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref KeycloakLoadBalancer
+      Protocol: HTTP
+      Port: 80
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref KeycloakTargetGroup
+
+  KeycloakTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub '${TenantId}-keycloak'
+      RequiresCompatibilities:
+        - FARGATE
+      Cpu: !Ref TaskCpu
+      Memory: !Ref TaskMemory
+      NetworkMode: awsvpc
+      ExecutionRoleArn:
+        Fn::ImportValue: !Sub '${TenantId}-KeycloakExecutionRoleArn'
+      TaskRoleArn:
+        Fn::ImportValue: !Sub '${TenantId}-KeycloakTaskRoleArn'
+      ContainerDefinitions:
+        - Name: keycloak
+          Image: !Ref KeycloakImage
+          Essential: true
+          Command:
+            - start
+          PortMappings:
+            - ContainerPort: !Ref KeycloakContainerPort
+              Protocol: tcp
+          Environment:
+            - Name: KC_DB
+              Value: postgres
+            - Name: KC_DB_URL_HOST
+              Value:
+                Fn::ImportValue: !Sub '${TenantId}-DBClusterEndpoint'
+            - Name: KC_DB_URL_PORT
+              Value:
+                Fn::ImportValue: !Sub '${TenantId}-DBClusterPort'
+            - Name: KC_DB_URL_DATABASE
+              Value:
+                Fn::ImportValue: !Sub '${TenantId}-DatabaseName'
+            - Name: KC_PROXY_HEADERS
+              Value: xforwarded
+            - Name: KC_HOSTNAME_STRICT
+              Value: 'false'
+            - Name: KC_HTTP_ENABLED
+              Value: 'true'
+            - Name: KC_HEALTH_ENABLED
+              Value: 'true'
+            - Name: KC_METRICS_ENABLED
+              Value: 'true'
+          Secrets:
+            - Name: KC_DB_USERNAME
+              ValueFrom: !Sub '${DBMasterUserSecretId}:username::'
+            - Name: KC_DB_PASSWORD
+              ValueFrom: !Sub '${DBMasterUserSecretId}:password::'
+            - Name: KC_BOOTSTRAP_ADMIN_USERNAME
+              ValueFrom: !Sub '${KeycloakAdminSecretId}:username::'
+            - Name: KC_BOOTSTRAP_ADMIN_PASSWORD
+              ValueFrom: !Sub '${KeycloakAdminSecretId}:password::'
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref KeycloakLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: keycloak
+
+  KeycloakService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - KeycloakListener
+    Properties:
+      ServiceName: !Sub '${TenantId}-keycloak'
+      Cluster:
+        Fn::ImportValue: !Sub '${TenantId}-ECSClusterArn'
+      LaunchType: FARGATE
+      DesiredCount: !Ref DesiredCount
+      TaskDefinition: !Ref KeycloakTaskDefinition
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
+          SecurityGroups:
+            - !Ref KeycloakTaskSecurityGroup
+          Subnets:
+            Fn::Split:
+              - ','
+              - Fn::ImportValue: !Sub '${VPCTenantId}-PublicSubnetIds'
+      LoadBalancers:
+        - ContainerName: keycloak
+          ContainerPort: !Ref KeycloakContainerPort
+          TargetGroupArn: !Ref KeycloakTargetGroup
+
+Outputs:
+  KeycloakServiceName:
+    Description: ECS service name for Keycloak
+    Value: !Ref KeycloakService
+    Export:
+      Name: !Sub '${TenantId}-KeycloakServiceName'
+
+  KeycloakServiceArn:
+    Description: ECS service ARN for Keycloak
+    Value: !GetAtt KeycloakService.ServiceArn
+    Export:
+      Name: !Sub '${TenantId}-KeycloakServiceArn'
+
+  KeycloakTaskDefinitionArn:
+    Description: Task definition ARN for Keycloak
+    Value: !Ref KeycloakTaskDefinition
+    Export:
+      Name: !Sub '${TenantId}-KeycloakTaskDefinitionArn'
+
+  KeycloakLoadBalancerDnsName:
+    Description: DNS name of Keycloak ALB
+    Value: !GetAtt KeycloakLoadBalancer.DNSName
+    Export:
+      Name: !Sub '${TenantId}-KeycloakLoadBalancerDnsName'
+
+  KeycloakLoadBalancerArn:
+    Description: ARN of Keycloak ALB
+    Value: !Ref KeycloakLoadBalancer
+    Export:
+      Name: !Sub '${TenantId}-KeycloakLoadBalancerArn'
+
+  KeycloakUrl:
+    Description: Public URL for Keycloak over HTTP
+    Value: !Sub 'http://${KeycloakLoadBalancer.DNSName}'
+    Export:
+      Name: !Sub '${TenantId}-KeycloakUrl'
+
+  KeycloakTaskSecurityGroupId:
+    Description: Security group ID for Keycloak tasks
+    Value: !Ref KeycloakTaskSecurityGroup
+    Export:
+      Name: !Sub '${TenantId}-KeycloakTaskSecurityGroupId'

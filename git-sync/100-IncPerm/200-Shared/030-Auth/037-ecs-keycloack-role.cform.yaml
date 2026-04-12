@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: IAM roles for Keycloak ECS task and execution
+
+Parameters:
+  TenantId:
+    Type: String
+    Default: main
+    Description: Tenant identifier used to prefix resource names and exports.
+
+Resources:
+  KeycloakExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${TenantId}-keycloak-exec'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: KeycloakSecretsRead
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                  - secretsmanager:DescribeSecret
+                Resource: '*'
+
+  KeycloakTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${TenantId}-keycloak-task'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+
+Outputs:
+  KeycloakExecutionRoleArn:
+    Description: ECS task execution role ARN for Keycloak
+    Value: !GetAtt KeycloakExecutionRole.Arn
+    Export:
+      Name: !Sub '${TenantId}-KeycloakExecutionRoleArn'
+
+  KeycloakTaskRoleArn:
+    Description: ECS task role ARN for Keycloak
+    Value: !GetAtt KeycloakTaskRole.Arn
+    Export:
+      Name: !Sub '${TenantId}-KeycloakTaskRoleArn'

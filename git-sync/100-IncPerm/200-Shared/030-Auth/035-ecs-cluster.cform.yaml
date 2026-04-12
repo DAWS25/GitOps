@@ -1,0 +1,97 @@
+# ENV_ID="project"
+# DOMAIN_NAME="petoboto.com"
+# ZONE_ID="Z01386901AXGFXHXKIDJX"
+# aws cloudformation deploy --stack-name acm-simple --parameter-overrides HostedZoneId=$ZONE_ID DomainName=$DOMAIN_NAME --template-file cloudformation/acm-simple/template.cform.yaml
+# aws cloudformation deploy --stack-name vpc-3ha --template-file cloudformation/vpc-3ha/template.cform.yaml
+# aws cloudformation deploy --stack-name alb-simple  --template-file cloudformation/alb-simple/template.cform.yaml
+# aws cloudformation deploy --stack-name alb-simple-alias --parameter-overrides HostedZoneId=$ZONE_ID DomainName=$DOMAIN_NAME --template-file cloudformation/alb-simple/alias.cform.yaml
+# aws cloudformation deploy --stack-name ecs-simple --capabilities CAPABILITY_NAMED_IAM --template-file cloudformation/ecs-simple/template.cform.yaml
+# aws cloudformation deploy --stack-name ecs-2048 --template-file cloudformation/ecs-simple/ecs-2048.cform.yaml
+# URL="https://$ENV_ID.$DOMAIN_NAME/2048"
+# echo "$URL"
+
+Description: ECS Cluster
+
+Parameters:
+  TenantId:
+    Type: String
+    Default: project
+  
+  ContainerInsights:
+    Type: String
+    Default: enabled
+    AllowedValues:
+      - enabled
+      - disabled
+    Description: Enable or disable container insights
+
+Resources:
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub '${TenantId}-ecs-cluster'
+      CapacityProviders:
+        - FARGATE
+      ClusterSettings:
+        - Name: containerInsights
+          Value: !Ref ContainerInsights
+      Tags:
+        - Key: TenantId
+          Value: !Ref TenantId
+
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${TenantId}-ecs-exec'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Tags:
+        - Key: TenantId
+          Value: !Ref TenantId
+
+  AppLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/ecs/${TenantId}/default'
+      RetentionInDays: 14
+
+Outputs:
+  ECSClusterName:
+    Description: The name of the ECS Cluster
+    Value: !Ref ECSCluster
+    Export:
+      Name: !Sub '${TenantId}-ECSClusterName'
+
+  ECSClusterArn:
+    Description: The ARN of the ECS Cluster
+    Value: !GetAtt ECSCluster.Arn
+    Export:
+      Name: !Sub '${TenantId}-ECSClusterArn'
+
+  ExecutionRoleArn:
+    Description: The ARN of the ECS Task Execution Role
+    Value: !GetAtt ExecutionRole.Arn
+    Export:
+      Name: !Sub '${TenantId}-ExecutionRoleArn'
+
+  AppLogGroupArn:
+    Description: The ARN of the Application Log Group
+    Value: !GetAtt AppLogGroup.Arn
+    Export:
+      Name: !Sub '${TenantId}-AppLogGroupArn'
+
+  AppLogGroupName:
+    Description: The name of the Application Log Group
+    Value: !Ref AppLogGroup
+    Export:
+      Name: !Sub '${TenantId}-AppLogGroupName'
