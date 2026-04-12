@@ -73,7 +73,7 @@ wait_for_stack() {
 	while (( n <= max )); do
 		status="$(stack_status "${stack}")"
 		case "${status}" in
-			CREATE_COMPLETE|UPDATE_COMPLETE|IMPORT_COMPLETE)
+			CREATE_COMPLETE|UPDATE_COMPLETE|IMPORT_COMPLETE|UPDATE_ROLLBACK_COMPLETE)
 				log "READY ${stack} (${status})"
 				return 0
 				;;
