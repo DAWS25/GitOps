@@ -1,0 +1,27 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'SNS Topic for Alarms'
+
+Parameters:
+  TenantId:
+    Type: String
+    Default: main
+    Description: Tenant identifier used to prefix resource names and exports.
+  
+  TopicName:
+    Type: String
+    Default: Tenant-alarms-topic
+    Description: Name of the SNS topic for Tenantanization alarms.
+
+Resources:
+  AlarmsTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${TenantId}-${TopicName}"
+      DisplayName: !Sub "${TenantId} Tenantanization Alarms"
+
+Outputs:
+  AlarmsTopicArn:
+    Description: ARN of the SNS topic for Tenantanization alarms
+    Value: !Ref AlarmsTopic
+    Export:
+      Name: !Sub "${TenantId}-AlarmsTopicArn"

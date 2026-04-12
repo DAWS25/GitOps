@@ -1,0 +1,27 @@
+Description: Email SNS Subscription for Alarms
+
+Parameters:
+  TenantId:
+    Type: String
+    Default: main
+    Description: Tenant identifier used to prefix resource names and exports.
+  
+  Email:
+    Type: String
+    Description: Email address to subscribe to the SNS topic for alarms.
+
+Resources:
+  AlarmsSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn:
+        Fn::ImportValue: !Sub "${TenantId}-AlarmsTopicArn"
+      Protocol: email
+      Endpoint: !Ref Email
+
+Outputs:
+  AlarmsSubscriptionArn:
+    Description: ARN of the SNS subscription for  alarms
+    Value: !Ref AlarmsSubscription
+    Export:
+      Name: !Sub "${TenantId}-AlarmsSubscriptionArn"

@@ -1,0 +1,108 @@
+# ENV_ID="project"
+# DOMAIN_NAME="petoboto.com"
+# ZONE_ID="Z01386901AXGFXHXKIDJX"
+# aws cloudformation deploy --stack-name acm-simple --parameter-overrides HostedZoneId=$ZONE_ID DomainName=$DOMAIN_NAME --template-file cloudformation/acm-simple/template.cform.yaml
+# aws cloudformation deploy --stack-name vpc-3ha --template-file cloudformation/vpc-3ha/template.cform.yaml
+# aws cloudformation deploy --stack-name alb-simple  --template-file cloudformation/alb-simple/template.cform.yaml
+# DNS_NAME=$(aws cloudformation describe-stacks --stack-name alb-simple --query "Stacks[0].Outputs[?OutputKey=='ALBDNSName'].OutputValue" --output text)
+# curl -k "https://$DNS_NAME" 
+# aws cloudformation deploy --stack-name alb-simple-alias --parameter-overrides HostedZoneId=$ZONE_ID DomainName=$DOMAIN_NAME --template-file cloudformation/alb-simple/alias.cform.yaml
+# aws cloudformation deploy --stack-name alb-simple-instances  --template-file cloudformation/alb-simple/instances.cform.yaml
+# URL="https://$ENV_ID.$DOMAIN_NAME"
+# echo "$URL"
+# curl "$URL"
+# for i in {1..10}; do echo -n "$i: " ; curl -k "$URL"; done
+Description: Simple ALB
+
+Parameters:
+  VPCTenantId:
+    Type: String
+    Default: project
+
+
+Resources:
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: ALB Security Group
+      VpcId:
+        Fn::ImportValue: !Sub "${VPCTenantId}-VpcId"
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          FromPort: 0
+          ToPort: 0
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub "${VPCTenantId}-alb"
+
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub "${VPCTenantId}-alb"
+      Scheme: internet-facing
+      Type: application
+      IpAddressType: ipv4
+      SecurityGroups:
+        - !Ref ALBSecurityGroup
+      Subnets:
+        - Fn::ImportValue: !Sub "${VPCTenantId}-PublicSubnet1Id"
+        - Fn::ImportValue: !Sub "${VPCTenantId}-PublicSubnet2Id"
+        - Fn::ImportValue: !Sub "${VPCTenantId}-PublicSubnet3Id"
+      Tags:
+        - Key: Name
+          Value: !Sub "${VPCTenantId}-alb"
+
+  HttpsListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 443
+      Protocol: HTTPS
+      SslPolicy: ELBSecurityPolicy-2016-08
+      Certificates:
+        - CertificateArn:
+            Fn::ImportValue: !Sub "${VPCTenantId}-CertificateArn"
+      DefaultActions:
+        - Type: fixed-response
+          FixedResponseConfig:
+            StatusCode: "418"
+            ContentType: text/html
+            MessageBody: !Sub '<img alt="I am a Teapot" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAAP1BMVEUsN0AfLDfZdzzqiUa5aDxdVk380JX39/TcekA5Q0mzbkT5wXrjgDvm5uL2u3TpkkwAAAAAAAAAAAAAAAAAAACQDqZ3AAAAFXRSTlP///////////////////////////8G25JnAAAAwUlEQVR42tWT2xKDIAxEdxOLt0r+/29LoBqcOvbZfWEcTpaQRWx/hCcCwD0wp4x7B946ADTD+RT/IFuxrim7VHkGYLWGVGsC3Q1xBMSXEfwKYylatSx7Dy8b3egQJgGlGndAPuSdlq2JAWRuzCkA3fbmDwCaUlhode8BQe5kwrPDkq0HxPxasABQPN8BqANs02nAXPqW/hbCVh9ZMAAfREw7gilzOvZFcZFmDNImXsXtWVeJ4Po9YJBhGYr49B/nRx949C7iLhodbgAAAABJRU5ErkJggg=="/>'
+
+Outputs:
+  ALBArn:
+    Description: ARN of the Application Load Balancer
+    Value: !Ref LoadBalancer
+    Export:
+      Name: !Sub "${TenantId}-ALBArn"
+
+  ALBDNSName:
+    Description: DNS name of the Application Load Balancer
+    Value: !GetAtt LoadBalancer.DNSName
+    Export:
+      Name: !Sub "${TenantId}-ALBDNSName"
+
+  ALBZoneId:
+    Description: Zone ID of the Application Load Balancer
+    Value: !GetAtt LoadBalancer.CanonicalHostedZoneID
+    Export:
+      Name: !Sub "${TenantId}-ALBZoneId"
+  
+  ALBSecurityGroupId:
+    Description: Security Group ID of the Application Load Balancer
+    Value: !Ref ALBSecurityGroup
+    Export:
+      Name: !Sub "${TenantId}-ALBSecurityGroupId"
+  
+  HttpsListenerArn:
+    Description: ARN of the HTTPS Listener
+    Value: !Ref HttpsListener
+    Export:
+      Name: !Sub "${TenantId}-HttpsListenerArn"
+      

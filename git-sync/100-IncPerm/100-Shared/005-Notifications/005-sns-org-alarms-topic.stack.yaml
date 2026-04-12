@@ -1,0 +1,10 @@
+template-file-path: git-sync/100-IncPerm/100-Shared/005-Notifications/005-sns-org-alarms-topic.cform.yaml
+
+TenantId: IncPerm
+
+parameters: 
+    TenantId: IncPerm
+    TopicName: daws25-alarms
+
+tags:
+    TenantId: IncPerm

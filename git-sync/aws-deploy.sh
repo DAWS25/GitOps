@@ -19,12 +19,23 @@ _SUMMARY=()
 # Helpers
 # ─────────────────────────────────────────────────────────────────
 
-file_sha256() {
+combined_sha256() {
 	if command -v sha256sum >/dev/null 2>&1; then
-		sha256sum "$1" | awk '{print $1}'
+		for f in "$@"; do
+			cat "$f"
+			printf '\n'
+		done | sha256sum | awk '{print $1}'
 	else
-		shasum -a 256 "$1" | awk '{print $1}'
+		for f in "$@"; do
+			cat "$f"
+			printf '\n'
+		done | shasum -a 256 | awk '{print $1}'
 	fi
+}
+
+stack_sha_file() {
+	local stack_file="$1"
+	printf '%s\n' "${stack_file%.stack.yaml}.cform.sha256.txt"
 }
 
 stack_status() {
@@ -96,9 +107,9 @@ deploy_stack() {
 		return 0
 	fi
 
-	local sha_file="${REPO_ROOT}/${template_path%.*}.sha256.txt"
+	local sha_file="$(stack_sha_file "${stack_file}")"
 	local current_hash
-	current_hash="$(file_sha256 "${REPO_ROOT}/${template_path}")"
+	current_hash="$(combined_sha256 "${stack_file}" "${REPO_ROOT}/${template_path}")"
 
 	# Handle stuck states before checking sha cache
 	local status
@@ -121,6 +132,12 @@ deploy_stack() {
 	# Clear sha cache if stack no longer exists
 	if [[ -z "${status}" || "${status}" == "DELETE_COMPLETE" ]]; then
 		rm -f "${sha_file}"
+	fi
+
+	# If the stack exists but the sha cache is missing, force a redeploy so the
+	# cache file is recreated from the current stack descriptor + template in git.
+	if [[ -n "${status}" && "${status}" != "DELETE_COMPLETE" && ! -f "${sha_file}" ]]; then
+		log "REDEPLOY ${stack_name} (sha256 cache missing → ${status})"
 	fi
 
 	# Skip if template unchanged and stack is live
@@ -287,8 +304,10 @@ process_stack_file() {
 
 	local status sha_short="n/a"
 	status="$(stack_status "${stack_name}")"
-	if [[ -n "${template_path}" && -f "${REPO_ROOT}/${template_path%.*}.sha256.txt" ]]; then
-		sha_short="$(cut -c1-12 "${REPO_ROOT}/${template_path%.*}.sha256.txt")"
+	local sha_file
+	sha_file="$(stack_sha_file "${file}")"
+	if [[ -f "${sha_file}" ]]; then
+		sha_short="$(cut -c1-12 "${sha_file}")"
 	fi
 	_SUMMARY+=("$(printf '%-55s  %-8s  %-22s  %s' "${stack_name}" "${action}" "${status}" "${sha_short}")")
 }

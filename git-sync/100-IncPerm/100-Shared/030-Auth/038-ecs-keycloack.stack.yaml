@@ -1,0 +1,10 @@
+template-file-path: git-sync/100-IncPerm/100-Shared/030-Auth/038-ecs-keycloack.cform.yaml
+
+parameters:
+	TenantId: IncPerm
+	VPCTenantId: IncPerm
+	DBMasterUserSecretId: ${KEYCLOAK_DB_MASTER_SECRET_ID}
+	KeycloakAdminSecretId: ${KEYCLOAK_ADMIN_SECRET_ID}
+
+tags:
+	TenantId: IncPerm

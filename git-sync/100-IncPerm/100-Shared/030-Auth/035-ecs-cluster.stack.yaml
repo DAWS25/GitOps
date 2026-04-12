@@ -1,0 +1,9 @@
+template-file-path: git-sync/100-IncPerm/100-Shared/030-Auth/035-ecs-cluster.cform.yaml
+
+TenantId: Auth
+
+parameters: 
+    TenantId: Auth
+
+tags:
+    TenantId: Auth

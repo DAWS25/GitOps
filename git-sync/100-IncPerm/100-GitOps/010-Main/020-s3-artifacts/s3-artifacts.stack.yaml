@@ -1,9 +1,0 @@
-template-file-path: git-sync/100-IncPerm/100-GitOps/010-Main/020-s3-artifacts/s3-artifacts.cform.yaml
-
-parameters: 
-    TenantId: GitOps
-    EnvId: Main
-    
-tags:
-  TenantId: GitOps
-  EnvId: Main

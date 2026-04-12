@@ -1,0 +1,10 @@
+template-file-path: git-sync/100-IncPerm/100-Shared/005-Notifications/006-sns-org-alarms-sub.cform.yaml
+
+TenantId: IncPerm
+
+parameters: 
+    TenantId: IncPerm
+    Email: julio+daws25@gmail.com
+
+tags:
+    TenantId: IncPerm

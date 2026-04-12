@@ -1,0 +1,9 @@
+template-file-path: git-sync/000-Modules/Certificate/acm-wildcard.cform.yaml
+
+parameters:
+    TenantId: Auth
+    
+
+tags:
+    TenantId: Auth
+

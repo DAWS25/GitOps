@@ -1,8 +1,0 @@
-template-file-path: git-sync/100-IncPerm/100-GitOps/010-Main/030-vpc-3rnat/020-vpc-private-subnets.cform.yaml
-parameters: 
-    TenantId: GitOps
-    EnvId: Main
-
-tags:
-  TenantId: GitOps
-  EnvId: Main

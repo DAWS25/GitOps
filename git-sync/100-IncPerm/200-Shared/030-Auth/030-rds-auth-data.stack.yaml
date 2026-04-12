@@ -1,9 +1,0 @@
-template-file-path: git-sync/000-Modules/PostgreSQL-SLS/db-cluster.cform.yaml
-
-parameters:
-    TenantId: IncPerm
-    VPCTenantId: IncPerm
-
-tags:
-    TenantId: IncPerm
-
