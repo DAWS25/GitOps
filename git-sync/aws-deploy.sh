@@ -35,7 +35,7 @@ combined_sha256() {
 
 stack_sha_file() {
 	local stack_file="$1"
-	printf '%s\n' "${stack_file%.stack.yaml}.cform.sha256.txt"
+	printf '%s\n' "${stack_file%.stack.yaml}.stack.sha256.txt"
 }
 
 stack_status() {

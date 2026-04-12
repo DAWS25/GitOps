@@ -116,6 +116,6 @@ popd
 echo "✓ Lambda@Edge root redirect function deployed"
 
 # Invalidate CloudFront SHA256 so it redeploys with updated Lambda@Edge version ARNs from SSM
-rm -f "${REPO_ROOT}/git-sync/100-IncPerm/300-Presence/040-Distribution/040-cloudfront-distribution.cform.sha256.txt"
+rm -f "${REPO_ROOT}/git-sync/100-IncPerm/300-Presence/040-Distribution/040-cloudfront-distribution.stack.sha256.txt"
 
 echo "✓ Presence web app hook completed ✓"
