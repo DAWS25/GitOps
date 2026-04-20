@@ -3,6 +3,8 @@ set -euo pipefail
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]:-$0}" )" && pwd )"
 
+export AWS_PAGER=""
+
 # ── Default: GIT_SYNC_BRANCH ────────────────────────────────────
 export GIT_SYNC_BRANCH="${GIT_SYNC_BRANCH:-main}"
 
