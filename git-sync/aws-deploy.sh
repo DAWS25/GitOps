@@ -277,10 +277,15 @@ process_stack_file() {
 
 	if [[ -f "${hook_base}.before.sh" ]]; then
 		log "HOOK  before ${stack_name}"
-		bash "${hook_base}.before.sh" "${stack_name}" "${file}" || {
-			log "FATAL  ${stack_name}: before hook failed (exit $?)"
+		local _rc=0
+		timeout 900 bash "${hook_base}.before.sh" "${stack_name}" "${file}" || _rc=$?
+		if (( _rc == 124 )); then
+			log "FATAL  ${stack_name}: before hook TIMED OUT after 15 minutes"
 			exit 1
-		}
+		elif (( _rc != 0 )); then
+			log "FATAL  ${stack_name}: before hook failed (exit ${_rc})"
+			exit 1
+		fi
 	fi
 
 	local action
@@ -296,10 +301,15 @@ process_stack_file() {
 
 	if [[ -f "${hook_base}.after.sh" ]]; then
 		log "HOOK  after ${stack_name}"
-		bash "${hook_base}.after.sh" "${stack_name}" "${file}" || {
-			log "FATAL  ${stack_name}: after hook failed (exit $?)"
+		local _rc=0
+		timeout 900 bash "${hook_base}.after.sh" "${stack_name}" "${file}" || _rc=$?
+		if (( _rc == 124 )); then
+			log "FATAL  ${stack_name}: after hook TIMED OUT after 15 minutes"
 			exit 1
-		}
+		elif (( _rc != 0 )); then
+			log "FATAL  ${stack_name}: after hook failed (exit ${_rc})"
+			exit 1
+		fi
 	fi
 
 	local status sha_short="n/a"

@@ -34,25 +34,9 @@ if [[ -z "${GIT_SYNC_ROLE_ARN:-}" ]]; then
   export GIT_SYNC_ROLE_ARN
 fi
 
-# ── Lookup: CLOUDFRONT_DISTRIBUTION_IDS (from Presence stack) ────
-if [[ -z "${CLOUDFRONT_DISTRIBUTION_IDS:-}" ]]; then
-  CLOUDFRONT_DISTRIBUTION_IDS="$(
-    aws cloudformation describe-stacks \
-      --stack-name Presence-Main-cloudfront-distribution \
-      --query "Stacks[0].Outputs[?OutputKey=='DistributionId'].OutputValue | [0]" \
-      --output text 2>/dev/null || true
-  )"
-  if [[ -z "${CLOUDFRONT_DISTRIBUTION_IDS}" || "${CLOUDFRONT_DISTRIBUTION_IDS}" == "None" ]]; then
-    echo "WARN: no CloudFront distribution found in Presence-Main-cloudfront-distribution stack (invalidation will be skipped)" >&2
-    CLOUDFRONT_DISTRIBUTION_IDS=""
-  fi
-  export CLOUDFRONT_DISTRIBUTION_IDS
-fi
-
 echo "REPOSITORY_LINK_ID=${REPOSITORY_LINK_ID}"
 echo "GIT_SYNC_ROLE_ARN=${GIT_SYNC_ROLE_ARN}"
 echo "GIT_SYNC_BRANCH=${GIT_SYNC_BRANCH}"
-echo "CLOUDFRONT_DISTRIBUTION_IDS=${CLOUDFRONT_DISTRIBUTION_IDS}"
 
 aws sts get-caller-identity
 sleep 10
