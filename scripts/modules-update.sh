@@ -24,7 +24,12 @@ for MODULE_DIR in modules/*/; do
         git reset --hard origin/main
     else
         echo "Submodule $MODULE_DIR not found or not initialized. Initializing submodule..."
-        git submodule update --init --recursive .
+        popd
+        git submodule update --init --recursive "$MODULE_DIR"
+        pushd "$MODULE_DIR"
+        git fetch origin main
+        git checkout main
+        git reset --hard origin/main
     fi
     popd
 done
