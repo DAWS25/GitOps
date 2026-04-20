@@ -8,10 +8,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pip \
     nodejs \
     npm \
+    gh \
     && rm -rf /var/lib/apt/lists/*
 
 # Install livereload
 RUN pip3 install --no-cache-dir --break-system-packages livereload
+
+# Install AWS CLI v2
+RUN curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o /tmp/awscli.zip \
+    && unzip -q /tmp/awscli.zip -d /tmp \
+    && /tmp/aws/install \
+    && rm -rf /tmp/aws /tmp/awscli.zip
+
+# Install AWS CDK
+RUN npm install -g aws-cdk
 
 # Prepare Nix store for vscode user
 RUN mkdir -p /nix && chown -R vscode:vscode /nix

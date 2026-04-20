@@ -192,10 +192,10 @@ deploy_stack() {
 ensure_sync_config() {
 	local stack="$1" config_file="$2"
 	local existing
-	existing="$(aws codeconnections list-sync-configurations \
-		--repository-link-id "${REPOSITORY_LINK_ID}" \
+	existing="$(aws codeconnections get-sync-configuration \
+		--resource-name "${stack}" \
 		--sync-type CFN_STACK_SYNC \
-		--query "SyncConfigurations[?ResourceName=='${stack}'].ConfigFile" \
+		--query 'SyncConfiguration.ConfigFile' \
 		--output text 2>/dev/null || true)"
 
 	if [[ -z "${existing}" || "${existing}" == "None" ]]; then
