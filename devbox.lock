@@ -116,6 +116,63 @@
     "github:NixOS/nixpkgs/nixpkgs-unstable": {
       "last_modified": "2026-01-20T02:11:35Z",
       "resolved": "github:NixOS/nixpkgs/ed142ab1b3a092c4d149245d0c4126a5d7ea00b0?lastModified=1768875095"
+    },
+    "python@3.14.3": {
+      "last_modified": "2026-03-21T07:29:51Z",
+      "plugin_version": "0.0.4",
+      "resolved": "github:NixOS/nixpkgs/09061f748ee21f68a089cd5d91ec1859cd93d0be#python314",
+      "source": "devbox-search",
+      "version": "3.14.3",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/dfkim8vahgdqhk1lrxz1j4mcighlrk99-python3-3.14.3",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/dfkim8vahgdqhk1lrxz1j4mcighlrk99-python3-3.14.3"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/s33vdxkahhrdbyrqyw8yn71kzr44l6a0-python3-3.14.3",
+              "default": true
+            },
+            {
+              "name": "debug",
+              "path": "/nix/store/q82pzlagc8igcmi0gd9d15nbyh75450g-python3-3.14.3-debug"
+            }
+          ],
+          "store_path": "/nix/store/s33vdxkahhrdbyrqyw8yn71kzr44l6a0-python3-3.14.3"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/vinh1kffaxdk2x5s2fqx3x56x4hgcpwr-python3-3.14.3",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/vinh1kffaxdk2x5s2fqx3x56x4hgcpwr-python3-3.14.3"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/qr0wqh2damb6asnyz4jkx61id5yg3qh2-python3-3.14.3",
+              "default": true
+            },
+            {
+              "name": "debug",
+              "path": "/nix/store/c3piq5blycxhicidsmfc0nih01r0svxq-python3-3.14.3-debug"
+            }
+          ],
+          "store_path": "/nix/store/qr0wqh2damb6asnyz4jkx61id5yg3qh2-python3-3.14.3"
+        }
+      }
     }
   }
 }
