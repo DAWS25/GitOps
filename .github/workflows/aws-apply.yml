@@ -9,6 +9,12 @@ on:
         description: "Branch to deploy (defaults to triggering branch)"
         required: false
         default: ""
+      dry_run:
+        description: "Dry run: skip the final aws-apply step"
+        required: false
+        default: "false"
+        type: choice
+        options: ["false", "true"]
 
 permissions:
   id-token: write   # required for OIDC → AWS
@@ -58,6 +64,7 @@ jobs:
 
       # ── 5. Run aws-apply ─────────────────────────────────────────────
       - name: Run aws-apply
+        if: ${{ inputs.dry_run != 'true' }}
         env:
           GIT_SYNC_BRANCH: ${{ inputs.branch || github.ref_name }}
           # Optional: comma-separated CloudFront distribution IDs to invalidate
@@ -67,3 +74,7 @@ jobs:
           # aws-apply.sh auto-discovers REPOSITORY_LINK_ID and GIT_SYNC_ROLE_ARN
           # from AWS at runtime; no manual wiring needed here.
         run: bash git-sync/aws-apply.sh
+
+      - name: Dry run complete
+        if: ${{ inputs.dry_run == 'true' }}
+        run: echo "Dry run complete — all setup steps passed, aws-apply skipped."
