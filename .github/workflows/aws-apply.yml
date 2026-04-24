@@ -1,0 +1,69 @@
+name: AWS Apply
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to deploy (defaults to triggering branch)"
+        required: false
+        default: ""
+
+permissions:
+  id-token: write   # required for OIDC → AWS
+  contents: read
+
+jobs:
+  aws-apply:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      # ── 1. Checkout this repo (with private submodules) ──────────────
+      - name: Checkout GitOps
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }}
+          submodules: recursive
+
+      # Rewrite SSH submodule URLs to HTTPS so git commands in hook scripts
+      # (git fetch/pull inside modules/Presence etc.) work without an SSH key.
+      - name: Rewrite SSH → HTTPS for private submodules
+        run: |
+          git config --global \
+            url."https://x-access-token:${{ secrets.GH_PAT }}@github.com/".insteadOf \
+            "git@github.com:"
+
+      # ── 2. Checkout GitOps-Secrets ────────────────────────────────────
+      - name: Checkout GitOps-Secrets
+        uses: actions/checkout@v4
+        with:
+          repository: DAWS25/GitOps-Secrets
+          token: ${{ secrets.GH_PAT }}
+          path: secrets
+
+      # ── 3. AWS credentials via OIDC ───────────────────────────────────
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      # ── 4. Install AWS SAM CLI (used by Presence after-hooks) ─────────
+      - name: Install AWS SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
+
+      # ── 5. Run aws-apply ─────────────────────────────────────────────
+      - name: Run aws-apply
+        env:
+          GIT_SYNC_BRANCH: ${{ inputs.branch || github.ref_name }}
+          # Optional: comma-separated CloudFront distribution IDs to invalidate
+          # after deploy. Set as a repo variable (not a secret) in GitHub Settings.
+          CLOUDFRONT_DISTRIBUTION_IDS: ${{ vars.CLOUDFRONT_DISTRIBUTION_IDS }}
+          # The secrets checkout is available at $GITHUB_WORKSPACE/secrets/
+          # aws-apply.sh auto-discovers REPOSITORY_LINK_ID and GIT_SYNC_ROLE_ARN
+          # from AWS at runtime; no manual wiring needed here.
+        run: bash git-sync/aws-apply.sh

@@ -275,6 +275,11 @@ process_stack_file() {
 	template_path="$(yaml_value "${file}" "template-file-path")"
 	hook_base="${file%.stack.yaml}"
 
+	if [[ -z "${template_path}" || ! -f "${REPO_ROOT}/${template_path}" ]]; then
+		log "SKIP  ${stack_name} (template not found: ${template_path:-<none>})"
+		return 0
+	fi
+
 	if [[ -f "${hook_base}.before.sh" ]]; then
 		log "HOOK  before ${stack_name}"
 		local _rc=0
