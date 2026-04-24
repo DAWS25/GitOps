@@ -58,7 +58,13 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
 
-      # ── 4. Install AWS SAM CLI (used by Presence after-hooks) ─────────
+      # ── 4. Python 3.14 (required by Presence SAM Lambda runtime) ────────
+      - name: Set up Python 3.14
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      # ── 5. Install AWS SAM CLI (used by Presence after-hooks) ─────────
       - name: Install AWS SAM CLI
         uses: aws-actions/setup-sam@v2
         with:
