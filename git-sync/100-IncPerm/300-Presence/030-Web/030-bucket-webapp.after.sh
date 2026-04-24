@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]:-$0}" )" && pwd )"
 REPO_ROOT="$(cd "${DIR}/../../../.." && pwd )"
 
