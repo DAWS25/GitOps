@@ -24,6 +24,8 @@ jobs:
   aws-apply:
     runs-on: ubuntu-latest
     environment: production
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       # ── 1. Checkout this repo (with private submodules) ──────────────
