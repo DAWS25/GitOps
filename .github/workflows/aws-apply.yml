@@ -28,7 +28,7 @@ jobs:
     steps:
       # ── 1. Checkout this repo (with private submodules) ──────────────
       - name: Checkout GitOps
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GH_PAT }}
           submodules: recursive
@@ -43,7 +43,7 @@ jobs:
 
       # ── 2. Checkout GitOps-Secrets ────────────────────────────────────
       - name: Checkout GitOps-Secrets
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: DAWS25/GitOps-Secrets
           token: ${{ secrets.GH_PAT }}
@@ -51,7 +51,7 @@ jobs:
 
       # ── 3. AWS credentials via OIDC ───────────────────────────────────
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
